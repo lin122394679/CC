@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!--<script src="./jquery.1.4.2.js"></script>-->
+    <script type="text/javascript">
+        function InitAjax()
+        {
+            var ajax = false;
+            try{
+                ajax = new ActiveXObject("Msxml2.XMLHTTP")
+            }catch (e){
+                try {
+                    ajax = new ActiveXObject("Microsoft.XMLHTTP")
+                } catch (e) {
+                    ajax = false;
+                }
+            }
+
+            if (!ajax && typeof XMLHttpRequest != 'undefined') {
+                ajax = new XMLHttpRequest();
+            }
+            return ajax;
+        }
+
+        function getNews(newsID) {
+            if (typeof newsID == "undefined") {
+                return false;
+            }
+            var url = "./show.php?id="+newsID;
+            var show = document.getElementById('show_news');
+            var ajax = InitAjax();
+            ajax.open("GET", url, true);
+            ajax.onreadystatechange = function () {
+                if (ajax.readyState == 4 && ajax.status == 200) {
+                    show.innerHTML = ajax.responseText;
+                }
+            }
+            ajax.send(null);
+        }
+
+
+        function saveUserInfo() {
+            var msg = document.getElementById('msg');
+            var f = document.user_info;
+            //并未对以下变量判断、、、
+            var userName = f.user_name.value;
+            var userAge = f.user_age.value;
+            var userSex = f.user_sex.value;
+            var url = "./save_info.php";
+
+            var postStr = "user_name="+userName+"&user_age="+userAge+"&user_sex="+userSex;
+            var ajax = InitAjax();
+            ajax.open("POST", url, true);
+            ajax.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            ajax.send(postStr);
+            ajax.onreadystatechange = function () {
+                if (ajax.readyState == 4 && ajax.status == 200) {
+                    msg.innerHTML = ajax.responseText;
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+<a href="#" onclick="getNews(1)">1</a>
+<div id="show_news"></div>
+
+<form name="user_info">
+    name: <input type="text" name="user_name"><br>
+    age: <input type="text" name="user_age"><br>
+    sex: <input type="text" name="user_sex"><br>
+    <input type="button" value="sub" onclick="saveUserInfo()">
+</form>
+<div id="msg"></div>
+</body>
+</html>
