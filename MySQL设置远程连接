@@ -17,3 +17,7 @@ mysql> GRANT ALL PRIVILEGES ON *.* TO 'hadoop'@'%' IDENTIFIED BY '1' WITH GRANT 
 mysql> FLUSH PRIVILEGES;
 
 这样，任何主机上的用户'hadoop'都可以凭借密码'1'远程连接MySQL数据库。
+
+
+MySQL基本操作--可参考地址：
+http://www.cnblogs.com/mr-wid/archive/2013/05/09/3068229.html
