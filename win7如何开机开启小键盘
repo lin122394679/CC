@@ -1,0 +1,3 @@
+1.regedit-》点[HKEY_USERS]后，再点[.DEFAULT]-》单击下面的[Control Panel]-》最后单击[Keyboard]-》在[Keyboard]的右边双击打开[InitialKeyboardIndicators]-》在弹出的窗口把[数值数据]改成2，再单击[确定]，退出注册清重启电脑即可！
+原数值数据：2147483648
+win10将默认的数值数据2147483648修改成80000002确定后，关闭注册表编辑器。
