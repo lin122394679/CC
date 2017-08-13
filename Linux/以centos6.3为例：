@@ -1,0 +1,11 @@
+以centos6.3为例：
+    进入clone的虚拟机，输入ifconfig -a可查看新分配的mac地址；
+    然后，cd /etc/sysconfig/network-scripts/下，将ifcfg-eth0改为ifcfg-eth1；
+ 接着，进入ifcfg-eth1中，进行修改如下：
+  DEVICE='eth1'
+  UUID删除或者#注释
+  HWADDR改为第一步看到的mac地址
+ IPADDR='192.168.20.11' 改为同克隆的机器在同一ip地址段即可  
+最后，service network restart，重启网卡即可；
+两台机器即可互相通信了。。。
+可以做mysql的主从复制等操作了。。。。
