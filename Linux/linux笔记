@@ -1,0 +1,41 @@
+linux笔记
+
+对于权限的表示：
+rwx == 421
+4 r 文件：查看文件内容  目录：查看目录下的文件与目录名称
+2 w 文件：修改文件内容 目录：在目录下增、删、改文件与目录名称
+1 x 文件：可执行，一般为程序或脚本 目录：可以用cd命令进入该目录
+
+目前比较流行的软件包格式有：可直接执行的RPM与DEB、源代码形式的gzip与bzip2压缩包。
+
+使用YUM安装软件包
+YUM是Yellow dog Update Modified的简写形式。YUM是改进版的RPM软件管理器，YUM很好解决了RPM所面临的软件包依赖问题，大量的软件依赖会让RPM成为恶魔。YUM可以从很多源中搜索软件以及它们的依赖包，并自动安装相应的依赖软件。使用YUM安装软件时至少需要一个YUM源，YUM源就是存放有很多RPM软件的文件夹，用户可以使用HTTP、FTP或本地文件夹的方式访问YUM源。
+
+1.设置YUM源：
+CentOS6.3默认的YUM源定义文件存放在/etc/yum.repos.d/目录下，用户可以自行定义任意可以使用的yum源，但文件名的扩展名必须是repo，其文件格式如下：
+选项								功能描述
+[]				[]中填写YUM源唯一的ID，可以为任意字符串
+name			制定YUM源名称，可以为任意字符串
+baseurl			指定YUM源的URL地址（可以是HTTP、FTP或 本地路径）
+mirrorlist			指定镜像站点目录
+enabled			是否激活该YUM源（0代表禁用，1代表激活，默认为激活）
+gpgcheck			安装软件时是否检查签名（0代表禁用，1代表激活）
+gpgkey			检查签名的密钥文件
+创建media.repo文件，使用CentOS6.3系统光盘作为YUM源，文件内容如下：
+[media]
+name=CentOS-6.3
+baseurl=file:///media/cdrom
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6
+
+yum clean all			情况yum缓存
+yum -y expect			非交互式安装
+yum update			检查所有的软件并更新
+
+crontab -e								为当前用户设置计划任务
+23 23 * * 5 tar -czf log.tar.bz2 /var/log			每周五晚23点23分执行日志备份
+00 */3 * * * who								每3小时的整点检查用户登录情况
+00 10 * * 3,5 free | mail -s "Mem" admin@xx.com	每周三、周五10点将系统内存信息发送给自己的邮箱
+
+

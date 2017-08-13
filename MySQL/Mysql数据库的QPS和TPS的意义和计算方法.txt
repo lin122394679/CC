@@ -1,0 +1,21 @@
+Mysql数据库的QPS和TPS的意义和计算方法
+在对数据库的性能监控上经常会提到QPS和TPS这两个名词，下面就分别简单的分享一下关于MySQL数据库中的QPS和TPS的意义和计算方法。
+
+1 TPS: 每秒事务量，通过以下方式来得到客户端应用程序所请求的 TPS 值，计算方法如下：
+
+Questi SHOW GLOBAL STATUS LIKE 'Questions';
+Uptime = SHOW GLOBAL STATUS LIKE 'Uptime';
+QPS=Questions/Uptime
+
+2 QPS: 每秒Query 量，这里的QPS 是指MySQL Server 每秒执行的Query总量，计算方法如下：
+
+Com_commit = SHOW GLOBAL STATUS LIKE 'Com_commit';
+Com_rollback = SHOW GLOBAL STATUS LIKE 'Com_rollback';
+Uptime = SHOW GLOBAL STATUS LIKE 'Uptime';
+TPS=(Com_commit + Com_rollback)/Uptime
+
+IOPS：(Input/Output Operations Per Second)，即每秒进行读写（I/O）操作的次数，多用于数据库等场合，衡量随机访问的性能。
+
+存储端的IOPS性能和主机端的IO是不同的，IOPS是指存储每秒可接受多少次主机发出的访问，主机的一次IO需要多次访问存储才可以完成。例如，主机写入一个最小的数据块，也要经过“发送写入请求、写入数据、收到写入确认”等三个步骤，也就是3个存储端访问。
+
+IOPS的测试benchmark工具主要有Iometer, IoZone, FIO等，可以综合用于测试磁盘在不同情形下的IOPS。对于应用系统，需要首先确定数据的负载特征，然后选择合理的IOPS指标进行测量和对比分析，据此选择合适的存储介质和软件系统。
