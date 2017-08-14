@@ -1,3 +1,3 @@
 vimdiff简单用法
-do    === 将右侧的内容覆盖到左侧
-dp    === 将左侧的内容覆盖的右侧
+do    === 将右侧的内容覆盖到左侧   right to left
+dp    === 将左侧的内容覆盖的右侧   left  to right
