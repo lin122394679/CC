@@ -1,1 +1,22 @@
 https://downloads.mysql.com/archives/community/
+MySQL选择安装方式：
+上方url地址--》选择Product Version（对应的MySQL版本号）--》Operating System（平台：Windows、Linux）--》OS Version（操作系统版本）
+具体例子：
+  以mysql-5.5.32下载为例：
+    Product Version:5.5.32
+    Operating System:Linux-Generic
+    OS Version:Linux-Genenric 2.6 （x86,64bit）
+  确定要下载的软件：
+    此处选择： Compressed TAR Archive
+              (mysql-5.5.32-linux2.6-x86_64.tar.gz)   MD5: 7094b497bd949e06b0ce49cf657b93f6   
+             
+              Signature：
+              GnuPG Signature of mysql-5.5.32-linux2.6-x86_64.tar.gz
+                -----BEGIN PGP SIGNATURE-----
+                Version: GnuPG v1.4.9 (SunOS)
+
+                iD8DBQBRwttvjHGNO1By4fURAjx/AKCmnIzaCisqGlKAWG3i3JnIaC9JVgCfR3aI
+                TKrdbWjf4b/RuJAoc2D7Wa0=
+                =LOvv
+                -----END PGP SIGNATURE-----
+  MySQL open source software is provided under the GPL License. 
