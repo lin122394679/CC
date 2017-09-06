@@ -1,4 +1,0 @@
-替换操作
-sed -i "s/v_hujiali/v_renzhenpeng/g" `grep "/home/users/v_hujiali/account_platform" -rl app`
-
-sed -i "s/v_hujiali/v_renzhenpeng/g" `grep "/home/users/v_renzhenpeng/acc_platform.bak" -rl app`
