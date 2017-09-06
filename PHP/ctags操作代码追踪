@@ -1,3 +1,0 @@
-ctags在相应的项目目录下，执行：
-ctags -R -f .tags --fields=+aimSl --language-force=php
-实现代码追踪
