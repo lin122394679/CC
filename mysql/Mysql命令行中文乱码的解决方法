@@ -1,0 +1,19 @@
+环境：Windows 7 64位，Mysql  5.5.9 for Win64 (x86)
+数据库本身安装时默认已经是使用utf8编码的了，但在命令行中执行查询时，查询到的中文依然乱码，解决方法如下：
+
+方法一：
+登录mysql命令行前指定gbk编码而不是utf8编码：>mysql -u用户名 -p --default-character-set=gbk
+
+方法二：
+登录mysql命令行后设置gbk编码：
+>mysql -u用户名 -p
+mysql>set names gbk;
+注：set names utf8 等同于同时运行了如下三条命令：
+set character_set_client=utf8;
+set character_set_results=utf8;
+set character_set_connection=utf8;
+
+数据库版本：5.5.11
+操作系统：XP SP3
+
+附：查看数据库的编码信息（服务端编码、客户端编码等）mysql>show variables like 'character_set_%';
