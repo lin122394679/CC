@@ -1,0 +1,49 @@
+本文介绍如何用PHP将时间显示为“刚刚”、“5分钟前”、“昨天10:23”等时间轴形式，而不是直接显示具体日期和时间。
+本文将介绍如何实现基于时间轴的时间的转换。
+首先我们要明白时间的几个函数：
+time():返回当前的 Unix 时间戳
+date():格式化一个本地时间／日期。
+应用举例：
+date("Y-m-d H:i:s",time()); 
+格式化当前时间，输出：2010-10-11 05:27:35
+strtotime():将任何英文文本的日期时间描述解析为 Unix 时间戳。
+应用举例：
+echo strtotime("+1 day"), "\n"; 
+输出1天前的时间戳：1286861475
+date_default_timezone_set():设定要用的默认时区。
+一般我们设置北京时间：date_default_timezone_set("PRC");
+理解上面几个函数后我们来写时间轴函数：
+该函数的原理就是将系统当前时间与目标时间比较，得到一个差值，再将差值与时间范围（转换成秒）比较，根据其处在时间轴的范围输出不同的结果（如：5分钟前）。为了便于计算，我们将时间都转换成Unix时间戳。
+function tranTime($time) { 
+    $rtime = date("m-d H:i",$time); 
+    $htime = date("H:i",$time); 
+     
+    $time = time() - $time; 
+ 
+    if ($time < 60) { 
+        $str = '刚刚'; 
+    } 
+    elseif ($time < 60 * 60) { 
+        $min = floor($time/60); 
+        $str = $min.'分钟前'; 
+    } 
+    elseif ($time < 60 * 60 * 24) { 
+        $h = floor($time/(60*60)); 
+        $str = $h.'小时前 '.$htime; 
+    } 
+    elseif ($time < 60 * 60 * 24 * 3) { 
+        $d = floor($time/(60*60*24)); 
+        if($d==1) 
+           $str = '昨天 '.$rtime; 
+        else 
+           $str = '前天 '.$rtime; 
+    } 
+    else { 
+        $str = $rtime; 
+    } 
+    return $str; 
+} 
+函数tranTime()中的参数$time必须为Unix时间戳，如果不是请先用strtotime()将其转换成Unix时间戳。上面的代码一看就明白了，不用再多述。
+调用函数，直接输出：
+$times="1286861696 "; 
+echo tranTime($times); 
