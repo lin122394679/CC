@@ -1,0 +1,40 @@
+函数：PHP删除目录及目录下所有文件
+功能：PHP操作文件。删除指定目录及（或）该目录下的所有文件。
+语言：PHP
+函数代码一：删除目录及目录下的所有文件
+function delFile($dirName,$delSelf=false){
+	if(file_exists($dirName) && $handle = opendir($dirName)){
+		while(false !==($item = readdir( $handle))){
+			if($item != '.' && $item != '..'){
+				if(file_exists($dirName.'/'.$item) && is_dir($dirName.'/'.$item)){
+					delFile($dirName.'/'.$item);
+				}else{
+					if(!unlink($dirName.'/'.$item)){
+						return false;
+					}
+				}
+			}
+		}
+		closedir($handle);
+		if($delSelf){
+			if(!rmdir($dirName)){
+				return false;
+			}
+		}
+	}else{
+		return false;
+	}
+	return true;
+}
+
+使用方法示例：
+假设需要删除一个名叫"upload"的同级目录即此目录下的所有文件，你可以通过以下代码完成：
+
+<?php
+delFile('upload',true);
+?>
+
+假设需要删除一个名叫"upload"目录下的所有文件（但无需删除目录文件夹），你可以通过以下代码完成：
+<?php
+delFile('upload');
+?>
