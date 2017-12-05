@@ -1,0 +1,21 @@
+MYSQL性能优化之分库分表与不停机修改mysql表结构，需要的朋友可以参考下
+1、分库分表
+很明显，一个主表（也就是很重要的表，例如用户表）无限制的增长势必严重影响性能，分库与分表是一个很不错的解决途径，也就是性能优化途径，现在的案例是我们有一个1000多万条记录的用户表members,查询起来非常之慢，同事的做法是将其散列到100个表中，分别从members0到members99，然后根据mid分发记录到这些表中，牛逼的代码大概是这样子：
+<?php 
+for($i=0;$i< 100; $i++ ){ 
+//echo "CREATE TABLE db2.members{$i} LIKE db1.members<br>"; 
+echo "INSERT INTO members{$i} SELECT * FROM members WHERE mid%100={$i}<br>"; 
+} 
+?> 
+
+2、不停机修改mysql表结构
+同样还是members表，前期设计的表结构不尽合理，随着数据库不断运行，其冗余数据也是增长巨大，同事使用了下面的方法来处理：
+先创建一个临时表： 
+/*创建临时表*/ 
+CREATE TABLE members_tmp LIKE members
+然后修改members_tmp的表结构为新结构，接着使用上面那个for循环来导出数据，因为1000万的数据一次性导出是不对的，mid是主键，一个区间一个区间的导，基本是一次导出5万条吧，这里略去了 
+接着重命名将新表替换上去：
+/*这是个颇为经典的语句哈*/ 
+RENAME TABLE members TO members_bak,members_tmp TO members;
+就是这样，基本可以做到无损失，无需停机更新表结构，但实际上RENAME期间表是被锁死的，所以选择在线少的时候操作是一个技巧。经过这个操作，使得原先8G多的表，一下子变成了2G多
+另外还讲到了mysql中float字段类型的时候出现的诡异现象，就是在pma中看到的数字根本不能作为条件来查询.
