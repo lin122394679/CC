@@ -1,0 +1,197 @@
+1. 直接方式 
+pcntl_fork() 创建一个进程，在父进程返回值是子进程的pid，在子进程返回值是0，-1表示创建进程失败。跟C非常相似。 
+测试脚本:
+<?php
+    // example of multiple processes
+    date_default_timezone_set( 'Asia/Chongqing');
+    echo "parent start, pid ", getmypid(), "\n" ;
+    beep();
+    for ($i=0; $i<3; ++$i){
+          $pid = pcntl_fork();
+           if ($pid == -1){
+                 die ("cannot fork" );
+          } else if ($pid > 0){
+                 echo "parent continue \n";
+                 for ($k=0; $k<2; ++$k){
+                      beep();
+                }
+          } else if ($pid == 0){
+                 echo "child start, pid ", getmypid(), "\n" ;
+                 for ($j=0; $j<5; ++$j){
+                      beep();
+                }
+                 exit ;
+          }
+    }
+    // ***
+    function beep(){
+           echo getmypid(), "\t" , date( 'Y-m-d H:i:s', time()), "\n" ;
+          sleep(1);
+    }
+?>
+--------------------------------------------------------------------------------
+2. 阻塞方式 
+用直接方式，父进程创建了子进程后，并没有等待子进程结束，而是继续运行。似乎这里看不到有什么问题。如果php脚本并不是运行完后自动结束，而是常驻内存的，就会造成子进程无法回收的问题。也就是僵尸进程。可以通过pcntl_wai()方法等待进程结束，然后回收已经结束的进程。 
+将测试脚本改成： 
+<?php
+date_default_timezone_set('Asia/Chongqing');
+echo 'parent start, pid ', getmypid() ."\n";
+
+beep();
+
+for ($i=0; $i<3; $i++) {
+    $pid = pcntl_fork();
+    if ($pid == -1) {
+        die('cannot work');
+    } else if ($pid > 0) {
+        echo "parent continue \n";
+        pcntl_wait($status);
+        for ($k=0;$k<2;$k++) {
+            beep();
+        }
+    } else if ($pid == 0) {
+        echo "child start, pid ", getmypid()."\n";
+        for ($j=0; $j<5; $j++) {
+            beep();
+        }
+        exit;
+    }
+}
+
+
+function beep() {
+    echo getmypid(),"\t",date('Y-m-d H:i:s', time())."\n";
+    sleep(1);
+}
+?>
+父进程在pcntl_wait()将自己阻塞，等待子进程运行完了才接着运行。 
+--------------------------------------------------------------------------------
+3. 非阻塞方式 
+
+阻塞方式失去了多进程的并行性。还有一种方法，既可以回收已经结束的子进程，又可以并行。这就是非阻塞的方式。 
+修改脚本： 
+<?php
+    // example of multiple processes
+    date_default_timezone_set( 'Asia/Chongqing');
+    declare (ticks = 1);
+    pcntl_signal(SIGCHLD, "garbage" );
+    echo "parent start, pid ", getmypid(), "\n" ;
+    beep();
+    for ($i=0; $i<3; ++$i){
+          $pid = pcntl_fork();
+           if ($pid == -1){
+                 die ("cannot fork" );
+          } else if ($pid > 0){
+                 echo "parent continue \n";
+                 for ($k=0; $k<2; ++$k){
+                      beep();
+                }
+          } else if ($pid == 0){
+                 echo "child start, pid ", getmypid(), "\n" ;
+                 for ($j=0; $j<5; ++$j){
+                      beep();
+                }
+                 exit (0);
+          }
+    }
+    // parent
+    while (1){
+           // do something else
+          sleep(5);
+    }
+    // ***
+    function garbage($signal){
+           echo "signel $signal received\n" ;
+          
+           while (($pid = pcntl_waitpid(-1, $status, WNOHANG))> 0){
+                 echo "\t child end pid $pid , status $status\n" ;
+          }
+    }
+    function beep(){
+           echo getmypid(), "\t" , date( 'Y-m-d H:i:s', time()), "\n" ;
+          sleep(1);
+    }
+?>
+用命令行运行 
+#php -f test.php & 
+--------------------------------------------------------------------------------
+4. 子进程退出状态 
+
+pcntl_waitpid(-1, $status, WNOHANG) $status 返回子进程的结束状态 
+--------------------------------------------------------------------------------
+5. windows多线程 
+
+windows系统不支持pcntl函数，幸好有curl_multi_exec()这个工具，利用内部的多线程，访问多个链接，每个链接可以作为一个任务。 
+编写脚本 test1.php 
+<?php
+    date_default_timezone_set( 'Asia/Chongqing');
+    $tasks = array(
+         'http://localhost/feedbowl/t2.php?job=task1',
+         'http://localhost/feedbowl/t2.php?job=task2',
+         'http://localhost/feedbowl/t2.php?job=task3'
+    );
+    $mh = curl_multi_init();
+    foreach ($tasks as $i => $task){
+         $ch[$i] = curl_init();
+         curl_setopt($ch[$i], CURLOPT_URL, $task);
+         curl_setopt($ch[$i], CURLOPT_RETURNTRANSFER, 1);
+         curl_multi_add_handle($mh, $ch[$i]);
+    }
+    do {$mrc = curl_multi_exec($mh,$active); } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+    while ($active && $mrc == CURLM_OK) {
+         if (curl_multi_select($mh) != -1) {
+           do {$mrc = curl_multi_exec($mh, $active); } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+         }
+    }
+    // completed, checkout result
+    foreach ($tasks as $j => $task){
+         if (curl_error($ch[$j])){
+              echo "task ${j} [$task ] error " , curl_error($ch[$j]), "\r\n" ;
+         } else {
+              echo "task ${j} [$task ] get: \r\n" , curl_multi_getcontent($ch[$j]), "\r\n" ;
+         }
+    }
+?>
+编写脚本 test2.php 
+<?php
+    date_default_timezone_set( 'Asia/Chongqing');
+    echo "child start, pid ", getmypid(), "\r\n" ;
+    for ($i=0; $i<5; ++$i){
+         beep();
+    }
+    exit (0);
+    // ***
+    function beep(){
+        echo getmypid(), "\t" , date('Y-m-d H:i:s' , time()), "\r\n";
+        sleep(1);
+    }
+?>
+用命令行运行 
+#php -f test1.php & 
+
+输出结果 
+task 0 [http://localhost/feedbowl/t2.php?job=task1] get: 
+child start, pid 5804 
+5804    2013-01-15 20:22:35 
+5804    2013-01-15 20:22:36 
+5804    2013-01-15 20:22:37 
+5804    2013-01-15 20:22:38 
+5804    2013-01-15 20:22:39 
+
+task 1 [http://localhost/feedbowl/t2.php?job=task2] get: 
+child start, pid 5804 
+5804    2013-01-15 20:22:35 
+5804    2013-01-15 20:22:36 
+5804    2013-01-15 20:22:37 
+5804    2013-01-15 20:22:38 
+5804    2013-01-15 20:22:39 
+
+task 2 [http://localhost/feedbowl/t2.php?job=task3] get: 
+child start, pid 5804 
+5804    2013-01-15 20:22:35 
+5804    2013-01-15 20:22:36 
+5804    2013-01-15 20:22:37 
+5804    2013-01-15 20:22:38 
+5804    2013-01-15 20:22:39 
+
+从打印的时间看到，多个任务几乎是同时运行的。 
