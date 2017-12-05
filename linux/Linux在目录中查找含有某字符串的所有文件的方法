@@ -1,0 +1,23 @@
+这里记录两种在linux系统中，在目录中查找含有指定字符串的所有文件的方法。
+如果你需要查找目录中所有含有 phpernote.com 字符串的文件，可以使用如下命令:
+（1）grep -rn 'phpernote.com' *
+关于grep一些常用的参数解释如下：
+*  表示当前目录所有文件，也可以是某个文件名
+-r 是递归查找
+-n 是显示行号
+-R 查找所有文件包含子目录
+-i 忽略大小写，默认是区分大小写的
+-l 只列出匹配的文件名
+-L 列出不匹配的文件名
+-w 只匹配整个单词，而不是字符串的一部分（如匹配 'php'，而不是 'phpstorm'）
+-C number 匹配的上下文分别显示[number]行
+还有两个比较实用的参数说明一下 
+\< 和 \> 分别标注单词的开始与结尾
+例如： 
+grep man * 会匹配 'Batman' 'manic' 'man'等
+grep '\<man' * 匹配'manic'和'man'，但不会匹配'Batman'
+grep '\<man\>' 只匹配'man'，而不会匹配到'Batman'或'manic'等字符串
+'^' 指匹配的字符串在行首， 
+'$' 指匹配的字符串在行尾，  
+（2）find -type f -name '*.php'|xargs grep 'phpernote.com'
+这里是通过 xargs 命令配合 find grep 命令查找的。
