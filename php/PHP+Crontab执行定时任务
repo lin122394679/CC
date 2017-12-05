@@ -1,0 +1,31 @@
+我们做web项目开发的，经常会需要定时备份数据，定时执行重启某个服务或者定时执行某个PHP程序等等，一般在Linux下使用Crontab，在Windows下使用计划任务。本文主要介绍Linux下使用Crontab基础知识以及执行PHP任务。
+Crontab是一个Unix/Linux系统下的常用的定时执行工具，可以在无需人工干预的情况下运行指定作业。
+安装Crontab
+yum install vixie-cron crontabs      //安装Crontab 
+ 
+chkconfig crond on                //设为开机自启动 
+service crond start                 //启动
+说明：vixie-cron软件包是cron的主程序；crontabs软件包是用来安装、卸装、 或列举用来驱动 cron 守护进程的表格的程序。
+使用Crontab
+cron是一个常驻服务，它提供计时器的功能，让用户在特定的时间得以执行预设的指令或程序。只要用户会编辑计时器的配置文件，就可以使用计时器的功能。
+查看crontab定时执行任务列表
+crontab -l
+添加crontab定时执行任务
+crontab -e
+Crontab任务命令格式
+格式：minutehourdayofmonthmonthdayofweekcommand解释：分钟小时日期月付周命令范围：0-590-231-311-120-7，0和7都代表周日
+在crontab中我们会经常用到* ,   -  /n 这4个符号，他们都有着特定的意义。
+符号说明*(星号)代表所有有效的值。 如：0 23 * * * backup 不论几月几日周几的23点整都执行backup命令。,(逗号)代表分割开多个值。如：30 9 1,16,20 * * command 每月的1、16、20号9点30分执行command命令。-(减号)代表一段时间范围。如0 9-17 * * * checkmail 每天9点到17点的整点执行checkmail命令/n代表每隔n长时间。如*/5 * * * * check 每隔5分钟执行一次check命令，与0-59/5一样。
+举几个栗子：
+每天凌晨3:00执行备份程序：0 3 * * * /root/backup.sh
+每周日8点30分执行日志清理程序：30 8 * * 7 /root/clear.sh
+每周1周5 0点整执行test程序：0 0 * * 1,5 test
+每年的5月12日14点执行wenchuan程序：0 14 12 5 * /root/wenchuan
+每晚18点到23点每15分钟重启一次php-fpm：*/15 18-23 * * * /etc/init.d/php-fpm
+执行PHP定时任务
+例1：每天凌晨1点钟执行业务数据统计任务。
+5 * * * * /usr/local/bin/php -f /home/web/stat.php >> /dev/null 2>&1
+例2：每小时的第5分钟获取微信access_token。
+5 * * * * /usr/local/bin/php -f /home/web/access.php >> /dev/null 2>&1
+/usr/local/bin/php是你PHP可执行程序的安装路径。
+Crontab定时任务的最小粒度是分钟，那如果我们要执行秒级的定时任务怎么办呢？比如每隔10秒钟执行一次任务呢？一个办法是可用通过bash脚本sleep来实现秒级定时，另一个办法是使用Swoole扩展来实现秒级任务，接下来我们会发文专门讲解基于swoole扩展的支持秒级处理的定时器程序。
