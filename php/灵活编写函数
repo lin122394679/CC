@@ -1,0 +1,27 @@
+function add_to_cart($item_id , $qty)
+
+{
+$_SESSION['cart']['item_id'] = $qty;
+}
+add_to_cart( 'IPHONE3' , 2 );
+
+使用上面的函数添加单个项目. 而当添加项列表的时候,你要创建另一个函数吗? 不用, 只要稍加留意不同类型的参数, 就会更灵活. 如:
+
+function add_to_cart($item_id , $qty)
+{
+if(!is_array($item_id))
+{
+$_SESSION['cart']['item_id'] = $qty;
+}
+else
+{
+foreach($item_id as $i_id => $qty)
+{
+$_SESSION['cart']['i_id'] = $qty;
+}
+}
+}
+add_to_cart( 'IPHONE3' , 2 );
+add_to_cart( array('IPHONE3' => 2 , 'IPAD' => 5) );
+
+现在, 同个函数可以处理不同类型的输入参数了. 可以参照上面的例子重构你的多处代码, 使其更智能.
