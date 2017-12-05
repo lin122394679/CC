@@ -1,0 +1,42 @@
+PHP的serialize是将变量序列化，返回一个具有变量类型和结构的字符串表达式，而JSON则是一种更轻、更友好的用于接口(AJAX、REST等)数据交换的格式。 其实两者都是以一种字符串的方式来体现一种数据结构。那么他们之间又有什么区别呢？
+serialize序列化
+我们在一些老的WEB系统中可能会看到在数据库或在文本文件中存储着一大串貌似有着特殊含义的字符串文本内容。我们仔细看会发现它具有数据类型和结构等信息，但是它并不容易人工阅读，它只适合PHP程序读取。PHP的serialize将数组进行了序列化并存储。我们假设有这样一个数组：
+$arr = array( 
+    "0" => array( 
+        "gameName" => "德乙", 
+        "homeName" => "比勒费尔德", 
+        "guestName" => "不伦瑞克", 
+        "endTime" => "2015-08-21" 
+    ), 
+    "1" => array( 
+        "gameName" => "英超", 
+        "homeName" => "水晶宫", 
+        "guestName" => "阿斯顿维拉", 
+        "endTime" => "2015-08-22" 
+    ) 
+); 
+我们要将这个数组内容存储在数据库或者文本文件中，以便其他地方读取。
+$serialize = serialize($arr); 
+echo $serialize; 
+我们使用PHP的serialize将数组进行序列化，输出以下结果：
+a:2:{i:0;a:4:{s:8:"gameName";s:6:"德乙";s:8:"homeName";s:15:"比勒费尔德";s:9:"guestName";s:12:"不伦瑞克";s:7:"endTime";s:10:"2015-08-21";}i:1;a:4:{s:8:"gameName";s:6:"英超";s:8:"homeName";s:9:"水晶宫";s:9:"guestName";s:15:"阿斯顿维拉";s:7:"endTime";s:10:"2015-08-22";}} 
+以上输出的结果看上去比较复杂，其实也很简单，它说明的就是一些数据类型和结构。
+a:2说明这是个有两个元素的数组（array）；
+i:0指序列索引；
+a:4指有4个字段
+s:8:"gameName"说明这是有8个字符的字符串（string）
+实际开发中我们只将序列化后的数据进行存储，并不要去关心存储的格式和以及字段意思。如果要将序列化后的数据恢复成数组，则使用unserialize()函数即可。
+print_r(unserialize($serialize)); 
+以上代码可以打印出数组。
+
+JSON数据解析
+我们知道，PHP操作JSON可以使用json_encode()和json_decode()两个函数。json_encode()可以将数组转换成json格式的文本数据，它方便存储和读取，而json_decode()可以直接将json数据转换成数组，方便调用。
+$jsonencode = json_encode($arr); 
+echo $jsonencode; 
+输出：
+[{"gameName":"\u5fb7\u4e59","homeName":"\u6bd4\u52d2\u8d39\u5c14\u5fb7","guestName":"\u4e0d\u4f26\u745e\u514b","endTime":"2015-08-21"},{"gameName":"\u82f1\u8d85","homeName":"\u6c34\u6676\u5bab","guestName":"\u963f\u65af\u987f\u7ef4\u62c9","endTime":"2015-08-22"}] 
+很显然，使用JSON后，数据空间要比serialize少，输出的结果中中文字符串经过编码，仔细看是键值对应，便于人工识别，而且关键是JSON格式的数据方便其他语种读取并识别，所以有人说它是XML替代品。JSON格式的数据能和WEB前端JS完成异步交互过程。如果要将json还原成数组，可以使用json_decode()函数。
+print_r(json_decode($jsonencode,true)); 
+关于JSON的应用有兴趣的同学可以参考本站文章：PHP中JSON的应用
+总结
+PHP的serialize将数组序列化后是便于存储，而JSON格式的数据不仅便于存储还能跟其他语言如javascript读取。它们在性能上可能会有细微区别，如果前后端交互使用比较多的话建议使用JSON，结合PHP、Javascript、JSON以及Ajax就可以完成强大的数据交互功能。
