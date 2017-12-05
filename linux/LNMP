@@ -1,0 +1,126 @@
+LNMP环境搭建
+
+准备工作：
+
+1、关闭防火墙
+service iptables stop
+2、关闭SELinux
+setenforce 0
+3、安装约定
+软件源代码包存放位置：/lnmp/src
+源代码编译安装位置：/usr/local/软件名
+数据库数据文件存储路径：/data/mysql
+4、安装编译工具及库文件
+使用CentOS yum 命令一键安装
+yum install -y apr* autoconf automake gcc gcc-c++ cmake gtk+-devel libcurl-devel zlib-devel openssl openssl-devel pcre pcre-devel gd kernel keyutils patch perl kernel-headers compat* cpp glibc libgomp libstdc++-devel keyutils-libs-devel libsepol-devel libselinux-devel krb5-devel libXpm* freetype-devel fontconfig fongconfig-devel libjpeg* libpng* php-gd gettext gettext-devel ncurses* libtools* libxml2 libxml2-devel patch policycoreutils bison
+
+软件安装篇
+1、安装libmcrypt，PHP中的加密扩展库
+tar -zxvf libmcrypt-2.5.8.tar.gz
+cd /lnmp/src/libmcrypt-2.5.8
+./configure #配置
+make && make install  #编译和安装
+2、安装nginx
+useradd www -s /sbin/nologin   #创建nginx运行账户www，不允许直接登录系统
+
+cd /lnmp/src/
+tar -zxvf nginx-1.11.5.tar.gz
+cd nginx-1.11.5
+
+./configure --prefix=/usr/local/nginx --without-http_memcached_module --user=www --group=www --with-http_stub_status_module --with-http_ssl_module
+
+make && make install
+
+设置nginx开机启动
+cp /lnmp/sr/nginx /etc/rc.d/init.d/ 	#拷贝启动文件
+chmod 775 /etc/rc.d/init.d/nginx 	#赋予文件执行权限
+chkconfig nginx on				#设置开机启动
+service nginx start				#启动nginx
+
+3、安装MySQL
+mkdir -p /data/www	 			#创建数据文件保存目录
+chown -R www:www /data/www	#设置目录所有者
+chmod 700 /data/www -R 		#设置目录权限
+
+useradd mysql -s /sbin/nologin	#创建用户MySQL，不允许直接登录系统
+mkdir -p /var/mysql/data			#创建MySQL数据库存放目录
+chown -R mysql:mysql	/var/mysql/data	#设置MySQL数据库目录权限
+
+cd /usr/local/src
+tar zxvf mysql-5.5.28.tar.gz
+cd mysql-5.5.28
+
+cmake -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
+-DMYSQL_UNIX_ADDR=/usr/local/mysql/mysql.sock \
+-DDEFAULT_CHARSET=utf8 \
+-DDEFAULT_COLLATION=utf8_general_ci \
+-DWITH_MYISAM_STORAGE_ENGINE=1 \
+-DWITH_INNOBASE_STORAGE_ENGINE=1 \
+-DWITH_MEMORY_STORAGE_ENGINE=1 \
+-DWITH_READLINE=1 -DENABLED_LOCAL_INFILE=1 \
+-DMYSQL_DATADIR=/var/mysql/data \
+-DMYSQL_USER=mysql -DMYSQL_TCP_PORT=3306
+
+make && make install
+
+cd /usr/local/mysql
+cp ./support-files/my-huge.cnf /etc/my.cnf 	#拷贝配置文件
+
+vi /etc/my.cnf		#编辑位置文件，在[mysqld]部分增加
+datadir = /var/mysql/data #添加mysql数据库路径
+
+./scripts/mysql_install_db --user=mysql 				#生成MySQL系统数据库
+cp ./support-files/mysql.server /etc/rc.d/init.d/mysqld	#把mysql加入系统启动
+vi /etc/rc.d/init.d/mysqld		#编辑
+basedir=/usr/local/mysql		#mysql程序安装路径
+datadir=/var/mysql/data 		#mysql数据库存放目录
+
+chmod 755 /etc/init.d/mysqld		#增加执行权限
+chkconfig mysqld on			#加入开机启动
+
+chown -R mysql /usr/local/mysql  #修改/usr/local/mysql所属用户为mysql
+service mysqld start #启动mysqld
+
+vi /etc/profile			#把mysql服务加入系统环境变量：在最后添加
+export PATH=$PATH:/usr/local/mysql/bin
+source /etc/profile		#使配置立即生效
+
+mkdir /var/lib/mysql		#创建目录
+ln -s /tmp/mysql.sock /var/lib/mysql/mysql.sock		#添加软连接
+mysql_secure_installation #设置MySQL密码，根据提示按Y回车或输入2次密码
+功能同上：mysqladmin -u root -p password "123456"  #或者直接修改密码
+
+4、安装php
+cd /lnmp/src
+tar -jxvf php-7.0.7.tar.bz2
+cd php-7.0.7
+./configure --prefix=/usr/local/php7 --with-config-file-path=/usr/local/php7/etc --with-mysqli=/usr/local/mysql/bin/mysql_config --enable-mysqlnd --with-mysql-sock=/usr/local/mysql/mysql.sock --with-gd --with-iconv --with-zlib --enable-xml --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization --enable-mbregex --enable-fpm --enable-mbstring --enable-ftp --enable-gd-native-ttf --with-openssl --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --enable-soap --without-pear --with-gettext --enable-session --with-mcrypt --with-curl --with-jpeg-dir --with-freetype-dir --with-pdo-mysql=/usr/local/mysql/
+
+make && make install 	#安装
+
+cp php.ini-production /usr/local/php7/etc/php.ini		#复制php配置文件到安装目录
+rm -rf /etc/php.ini								#删除系统自带配置文件
+ln -s /usr/local/php7/etc/php.ini /etc/php.ini			#添加软连接
+
+cp /usr/local/php7/etc/php-fpm.conf.default /usr/local/php7/etc/php-fpm.conf  #拷贝模板配置文件为php-fpm配置文件
+修改:/usr/local/php7/etc/php-fpm.conf
+pid = run/php-fpm.pid #取消前面的分号
+
+cp /usr/local/php7/etc/php-fpm.d/www.conf.default /usr/local/php7/etc/php-fpm.d/www.conf
+修改：/usr/local/php7/etc/php-fpm.d/www.conf
+user = www 	#设置php-fpm运行账号为www
+group = www 	#设置php-fpm运行组为www
+
+设置php-fpm开机启动
+cp sapi/fpm/init.d.php-fpm /etc/rc.d/init.d/php-fpm	#拷贝php-fpm到启动目录
+chmod +x /etc/rc.d/init.d/php-fpm				#添加可执行权限
+chkconfig php-fpm on						#设置开机启动
+service php-fpm start						#启动php-fpm
+
+5、配置nginx支持php
+修改配置文件：/usr/local/nginx/conf/nginx.conf
+1、去掉location ~ \.php$ {}等几行前面的#
+2、将：fastcgi_param SCRIPT_FILENAME /scripts$fastcgi_script_name;
+改为：fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+
