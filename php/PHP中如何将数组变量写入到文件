@@ -1,0 +1,20 @@
+在用PHP记录日志，或者是 Ajax 请求出错想要 debug 的时候。我们一般都会将信息写入到一个指定的文件当中。然后根据相应的信息来处理问题。
+比如笔者最喜欢在用 Ajax 取不到数据的时候，在PHP脚本里面加上下面一段代码：
+$fp=fopen('./a.txt','a+b');
+fwrite($fp,$content);
+fclose($fp);
+但是，这里有一个问题。那就是 $content 是一个数组怎么办？
+你可能会说，我循环输出。那要是多维数组呢?
+我只是为了 debug 用得着搞得那么累吗。
+这里你可以使用 var_export()
+此函数返回关于传递给该函数的变量的结构信息，它和 var_dump() 类似，不同的是其返回的表示是正常的 PHP 代码。
+可以通过将函数的第二个参数设置为 TRUE，从而返回变量的表示。
+$fp=fopen('./a.txt','a+b');
+fwrite($fp,var_export($content,true));
+fclose($fp);
+注意 var_export() 的第二个参数需要设置为 true 才表示取得返回值。要不然是直接输出。
+另外，如果你的 $content 只是一个数组，而不包含其他的内容的话，你也可以用 print_r()，同样的，print_r() 的第二个参数也要设置为 true。
+
+$fp=fopen('./a.txt','a+b');
+fwrite($fp,print_r($content,true));
+fclose($fp);
