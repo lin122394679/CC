@@ -1,0 +1,50 @@
+如果不喜欢别人在他们的网页上盗链自己的图片、文档的话，可以通过".htaccess"的命令来做到。通过.htaccess来防止网站的图片、压缩文件、或视频等非Html文件被盗链的方法相当简单，通过在该文件中加入几句命令即可保护我们宝贵的带宽。下面提供两种方法解决盗链：
+
+方法一：
+所需要的命令如下：
+RewriteEngine on
+
+RewriteCond %{ HTTP_REFERER } !^$
+
+RewriteCond %{ HTTP_REFERER } !^http://(www.)?simue.com /.*$ [NC]
+
+RewriteRule .(gif &line;jpg)$ - [F]
+
+如果觉得让别人的页面开个天窗不好看，那可以用一张图片来代替：
+RewriteEngine on
+
+RewriteCond %{ HTTP_REFERER } !^$
+
+RewriteCond %{ HTTP_REFERER } !^http://(www.)?simue.com/.*$ [NC]
+
+RewriteRule .(gif &line;jpg)$ http://www.simue.com /替代图片文件名 [R,L]
+
+需要注意的是，如果通过FTP方式将创建好的.htaccess上传到服务器上，传输模式应为ASCII而非Binary。上传到服务器后，应将其属性通过 CHMOD修改为644 或“RW-R–R–”，这样，可以保证服务器能够使用同时无法通过浏览器修改，当然，.htaccess的可读属性也存在一定的风险：攻击者可通过它找出 您要保护的对象或认证文件位置——解决办法是将认证文件.htpasswd放到网站根目录之外，这样，便无法通过网络找到它了。
+
+方法二：
+RewriteEngine on
+
+RewriteCond %{HTTP_REFERER} !^$ [NC]
+
+RewriteCond %{HTTP_REFERER} !simue.com [NC]
+
+RewriteCond %{HTTP_REFERER} !baidu.com [NC]
+
+RewriteCond %{HTTP_REFERER} !google.com [NC]
+
+RewriteRule .*.(gif|jpg)$ http://www.simue.com /no.png [R,NC,L]
+
+简单的解释一下上述语句：
+1、RewriteCond %{HTTP_REFERER} !^$ [NC]
+允许空“HTTP_REFERER”的访问，即允许用户在浏览器地址栏中直接输入图片地址时图片文件的显示。一般而言，这是可选的，不过，建议这么设置，如果强迫必须具有“HTTP_REFERER”才能访问，可能会带来某些问题，比如说在用户通过代理服务器访问时。
+2、RewriteCond %{HTTP_REFERER} !simue.com [NC]
+设置允许访问的HTTP来源，包括我们的网站 自身、Google、Baidu等。
+3、RewriteRule .*.(gif|jpg|png)$ http://www.simue.com/no.png [R,NC,L]
+定义被盗链时替代的图片，让所有盗链 jpg、gif、png 等文件的网页，显示根目录下的 no.png 文件。注意：替换显示的图片不要放在设置防盗链的目录中，并且该图片文件体积越小越好。当然你也可以不设置替换图片，而是使用下面的语句即可：
+RewriteRule .*.(gif|jpg|png)$ - [F]
+4、说明一下其中的R、NC 和 L
+R 就是转向的意思
+NC 指的是不区分大小写
+L 的作用是指明本次转向到此结束，后续的转向不受先前判断语句的影响
+5、防止盗链的文件类型
+上例中是 gif、jpg、png，而根据需要，可更改或添加其他文件类型，如rar、swf等，不同文件扩展名间使用“|”分割。
