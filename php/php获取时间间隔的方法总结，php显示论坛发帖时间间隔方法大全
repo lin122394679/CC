@@ -1,0 +1,68 @@
+有没有在论坛或者发表回复帖子的地方看到比较有意思的显示留言的方式，比如某某多少分钟前发表了什么什么，某某刚刚回复了帖子等。这是一种比较有趣的显示方式。下面本人也总结了两个个性的显示多少分钟前，多少小时前，多少天前回复或者发表了什么什么的方法。现分享代码如下：
+<?php
+//获取时间间隔
+function transDate($timestamp){
+	$curTime=time();
+	$space=$curTime-$timestamp;
+	if($space<60){
+		$string='刚刚';
+		return $string;
+	}elseif($space<3600){
+		$string=floor($space/60).'分钟前';
+		return $string;
+	}
+	$curtimeArray=getdate($curTime);
+	$timeArray=getDate($timestamp);
+	if($curtimeArray['year']==$timeArray['year']){
+		if($curtimeArray['yday']==$timeArray['yday']){
+			$format='%H:%M';
+			$string=strftime($format,$timestamp);
+			return '今天';
+		}elseif(($curtimeArray['yday']-1)==$timeArray['yday']){
+			$format='%H:%M';
+			$string=strftime($format,$timestamp);
+			return '昨天';
+		}else{
+			$string=sprintf('%d月%d日',$timeArray['mon'],$timeArray['mday']);
+			return $string;
+		}
+	}
+	$string=sprintf('%d年%d月%d日',$timeArray['year'],$timeArray['mon'],$timeArray['mday']);  
+	return $string;
+}
+
+另外一种获取时间间隔的方法：
+<?php
+//php 获取时间间隔
+function time_tran($timeInt,$format='Y-m-d H:i:s'){
+	$d=time()-$timeInt;
+	if($d<0){
+		return $timeInt;
+	}else{
+		if($d<60){
+			return $d.'秒前';
+		}else{
+			if($d<3600){
+				return floor($d/60).'分钟前';
+			}else{
+				if($d<86400){
+					return floor($d/3600).'小时前';
+				}else{
+					if($d<259200){//3天内
+						return floor($d/86400).'天前';
+					}else{
+						return date($format,$timeInt);
+					}
+				}
+			}
+		}
+	}
+}
+
+以上函数的使用方法如下：
+<?php
+header('Content-type:text/html;charset=utf-8');
+$d=time()-10;
+echo transDate($d);//显示结果将为：刚刚
+echo '<br />';
+echo time_tran($d);//显示结果将为：10秒前
