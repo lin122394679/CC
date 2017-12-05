@@ -1,0 +1,29 @@
+在Linux VPS系统上有时候会发现MySQL占用CPU高，导致系统的负载比较高。这种情况很可能是某个SQL语句执行的时间太长导致的。优化一下这个SQL语句或者优化一下这个SQL引用的某个表的索引一般能解决问题。但是怎么找到是哪个SQL语句的执行时间过长呢？可以通过 MySQL Slow Log 命令来查找，详解如下。
+首先找到MySQL的配置文件my.cnf，根据不同版本的mysql开启慢查询的配置也不一样，下面以MySQL 5.0 ，5.1为例进行说明。
+mysql 5.0
+[mysqld]
+long_query_time = 1 
+log-slow-queries = /var/log/mysql/slow.log
+mysql 5.1
+[mysqld]
+long_query_time = 1 
+slow_query_log=1 
+slow_query_log_file = /var/log/mysql/slow.log
+long_query_time 是指执行超过多久的sql会被log下来，这里是1秒。
+log-slow-queries和slow_query_log_file 设置把日志写在哪里
+把上述参数打开，运行一段时间，就可以关掉了，省得影响生产环境。
+接下来就是分析了，我这里的文件名字叫 /var/log/mysql/slow.log。
+先 mysqldumpslow –help 下，主要用的是：
+-s ORDER what to sort by (t, at, l, al, r, ar etc), ‘at' is default 
+-t NUM just show the top n queries 
+-g PATTERN grep: only consider stmts that include this string
+-s，是order的顺序，说明写的不够详细，主要有 c,t,l,r和ac,at,al,ar，分别是按照query次数，时间，lock的时间和返回的记录数来排序，前面加了a的时倒序 
+-t，是top n的意思，即为返回前面多少条的数据 
+-g，后边可以写一个正则匹配模式，大小写不敏感的
+ok，按照上面的意思执行下面两条命令试试：
+mysqldumpslow -s c -t 20 /var/log/mysql/slow.log
+mysqldumpslow -s r -t 20 /var/log/mysql/slow.log
+上述命令可以看出访问次数最多的20个sql语句和返回记录集最多的20个sql，再输入下面一条命令：
+mysqldumpslow -t 10 -s t -g "left join" /var/log/mysql/slow.log
+这个是按照时间返回前10条里面含有左连接的sql语句。
+OK，通过以上这些简单的命令就可以查询出来那些 sql 语句是性能的瓶颈了，从而进行优化。
