@@ -1,0 +1,33 @@
+写一个php文件，然后在以后台形式来运行它，例如：
+
+<?php
+//Action代码
+public function createAction(){
+  //....
+  //将args替换成要传给insertLargeData.php的参数，参数间用空格间隔
+  system('php -f insertLargeData.php ' . ' args ' . '&');
+  $this->redirect('/');
+}
+?>
+
+然后在insertLargeData.php文件中做数据库操作。也可以用cronjob + php的方式实现大数据量的处理。
+如果是在终端运行php命令，当终端关闭后，刚刚执行的命令也会被强制关闭，如果你想让其不受终端关闭的影响，可以使用nohup命令实现：
+
+<?php
+//Action代码
+public function createAction(){
+  //....
+  //将args替换成要传给insertLargeData.php的参数，参数间用空格间隔
+  system('nohup php -f insertLargeData.php ' . ' args ' . '&');
+  $this->redirect('/');
+}
+?>
+
+你还可以使用screen命令代替nohup命令。
+ 
+//将args替换成要传给insertLargeData.php的参数，参数间用空格间隔
+ system('php -f insertLargeData.php ' . ' args ' . '&');
+
+
+echo exec("/usr/bin/php {$path} {$pid} {$total}");
+exit(0);
