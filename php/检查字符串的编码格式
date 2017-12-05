@@ -1,0 +1,8 @@
+如果不清楚字符串的编码格式的话，使用mb_detect_encoding()检查。
+如果要转换编码，使用函数iconv()，如gb2312转utf-8：
+iconv("gb2312", "utf-8", $text);
+
+当遇到无法确定原编码是何种编码，或者iconv转化后无法正常显示时可用mb_convert_encodiing函数。
+$str = mb_conver_encoding($str, "utf-8");
+
+
