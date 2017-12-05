@@ -1,0 +1,54 @@
+PHP在魔术函数__autoload()方法出现以前，如果你要在一个程序文件中实例化100个对象，那么你必须用include或者require包含进来100个类文件，或者你把这100个类定义在同一个类文件中——相信这个文件一定会非常大。
+
+但是__autoload()方法出来了，以后就不必为此大伤脑筋了，这个类会在你实例化对象之前自动加载制定的文件。
+
+下边我们通过一个例子来看一下，具体的使用方法，并在稍后说明使用PHP魔术函数__autoload应该注意些什么。
+
+代码如下
+//定义一个类ClassA，文件名为ClassA.php
+class ClassA{
+public function __construct(){
+echo "ClassA load success!";
+}
+}
+//定义一个类ClassB，文件名为ClassB.php，ClassB继承ClassA
+class ClassB extends ClassA {
+public function __construct(){
+//parent::__construct();
+echo "ClassB load success!";
+}
+}
+
+定义两个测试用的类之后，我们来编写一个含有__autoload()方法的PHP运行程序文件如下：
+
+代码如下
+function __autoload($classname){
+$classpath="./".$classname.'.php';
+if(file_exists($classpath)){
+require_once($classpath);
+}
+else{
+echo 'class file'.$classpath.'not found!';
+}
+}
+$newobj = new ClassA();
+$newobj = new ClassB();
+
+这个文件的运行是一点问题都没有的，可见autoload是多么的好用啊，呵呵……
+
+但是不得不提醒你一下几个方面是必须要注意的。
+
+1、如果类存在继承关系（例如：ClassB extends ClassA），并且ClassA不在ClassB所在目录
+利用__autoload魔术函数实例化ClassB的时候就会受到一个致命错误：
+代码如下
+Fatal error: Class ‘Classd’ not found in ……ClassB.php on line 2，
+
+解决方法：把所有存在extends关系的类放在同一个文件目录下，或者在实例化一个继承类的时候在文件中手工包含被继承的类；
+
+2、另外一个需要注意的是，类名和类的文件名必须一致，才能更方便的使用魔术函数__autoload；
+
+其他需要注意的事情：
+
+3、在CLI模式下运行PHP脚本的话这个方法无效；
+
+4、如果你的类名称和用户的输入有关——或者依赖于用户的输入，一定要注意检查输入的文件名，例如：.././这样的文件名是非常危险的。
