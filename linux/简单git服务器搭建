@@ -1,0 +1,83 @@
+具体操作
+本文以web代码为例
+创建服务器端代码托管仓库（远程连接仓库）
+第一步：创建git用户：adduser git
+第二步：添加要登录用户的公钥：
+cd /home/git
+mkdir .ssh
+touch authorized_keys
+#使用vim将公钥添加到authorized_keys文件中,一行一个
+公钥文件在~/.ssh文件加下；本文以Windows下的目录为例
+C:\Users\用户名\.ssh
+
+第三步：选定目录作为服务器端代码托管文件夹:
+cd /opt/code
+git init --bare blog.git
+第四步：添加钩子文件
+cd /opt/code/blog.git/hooks
+touch post-receive
+#使用vim打开post-receive将如下shell写入文件中
+#!/bin/bash
+IS_BARE=$(git rev-parse --is-bare-repository)
+if [ -z "$IS_BARE" ]; then
+echo >&2 "fatal: post-receive: IS_NOT_BARE"
+exit 1
+fi
+unset GIT_DIR
+DeployPath="/var/www/blog"#这里写项目实际部署的目录
+cd $DeployPath
+git fetch --all
+git reset --hard origin/master
+
+#修改post-receive文件权限
+chmod +x post-receive
+服务器端创建部署项目的文件夹
+这个目录是实际运行的线上代码
+cd /var/www/
+git clone /opt/code/blog.git
+克隆后会有一个空仓库的提示
+Git客户端设置（本文是在Windows下使用Git进行操作）
+第一步：将远程仓库进行克隆
+git clone git@IP:/opt/code/blog.git
+第二步：创建测试文件，上传到远程仓库
+#进入blog目录创建一个测试文件index.html
+git add .
+git commit -m 'create new file'
+git push
+第三步：测试是否自动部署
+在浏览器中输入对应的IP地址即可
+
+遇到的问题
+错误一
+错误详情
+在客户端克隆代码时出现Permission denied, please try again错误
+产生原因
+ssh相关配置文件没有配置
+解决方式
+#将/etc/ssh/sshd_config文件中下面几个选项的注释去掉
+PubkeyAuthentication yes
+AuthorizedKeysFile yes
+%h/.ssh/authorized_keys
+在Ubuntu下如果将/etc/passwd中的
+git:x:1000:1000:,,,:/home/git:/bin/bash
+修改为
+git:x:1000:1000:,,,:/home/git:/bin/git-shell
+后将无法克隆，即会报上述的错误
+有关ssh的文章
+错误二
+错误详情
+fatal: 'opt/code/blog.git' does not appear to be a git repository
+fatal: Could not read from remote repository.
+产生原因
+仓库目录地址写错，应该写绝对路径
+解决方式
+修改仓库地址
+$ git clone git@IP:/opt/code/blog.git
+本文说明
+  ● 本文对于命令大都使用的是绝对路径，若没有则先会以绝对路径先进入对应的目录，在进行操作
+  ● 对于可以部分名称设置可以根据自己的需要进行自定义设置
+  ● 本文实际操作的环境
+      ○ 腾讯云主机
+      ○ Ubuntu 12.04
+      ○ Git版本 1.7.9.5
+  ● 注意：路径、目录权限问题
