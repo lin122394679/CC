@@ -1,0 +1,56 @@
+Memcached使用
+
+1、搭建好LNMP环境
+
+2、安装依赖包
+
+3、安装memcached
+tar -zxvf memcached-1.4.33.tar.gz
+cd memcache-1.4.33
+./configure --prefix=/usr/local/memcached --enable-64bit
+
+在这个时候，不一定会编译通过，依旧会出现:
+checking for libevent directory… configure: error: libevent is required. You can get it from http://www.monkey.org/~provos/libevent/
+If it’s already installed, specify its path using –with-libevent=/dir/
+因为libevent 这个包是系统默认安装的，没有安装相应的开发所用的头文件。
+所以，还要使用如下命令来安装：
+yum install libevent-devel
+再编辑，即可通过。。
+
+make && make install
+
+开启服务：
+cd /usr/local/memcached/bin
+./memcached -u www -d
+-p: 指定端口，默认为11211
+-m:指定内存，根据自己硬件设置
+-u：指定用户，不能是root
+-d：后台运行
+
+4、安装libmemcached
+tar -zxvf libmemcached-1.0.18.tar.gz
+cd libmemcached-1.0.18
+./configure --prefix=/usr/local/libmemcached --with-memcached
+make && make install
+
+5、安装php-memcached-php7
+phpize
+./configure --with-php-config=/usr/local/php7/bin/php-config --with-libmemcached-dir=/usr/local/libmemcached
+make && make install
+将上步得到的路径添加到PHP配置文件： /usr/local/php7/etc/php.ini
+extension="/usr/local/php7/lib/php/extensions/no-debug-non-zts-20151012/memcached.so"
+重启php: service php-fpm restart
+
+6、使用memcached
+创建新对象： new Memcached
+添加服务器：addServer
+添加键值对：set
+根据键获取值：get
+删除键值对： delete
+增加指定数值：increment
+减去指定数值：decrement
+清空所有缓存：flush
+7、设置session使用memcached保存
+vi /usr/local/php7/etc/php.ini
+session.save_handler=memcached
+session.save_path="127.0.0.1:11211"
