@@ -1,0 +1,118 @@
+当文章内容特长时，为了方便阅读和页面展示我们一般将内容分页来显示。而一般分页处理是在后台发布文章的时候就将提交的内容生成多个分页后的静态文件。本文我们结合实例来讲解采用PHP动态将长文章内容进行分页处理。
+
+如何分页
+手动分页：一般在编辑内容时加入特殊分页标记，如{pages}，提交后，PHP程序会根据分页符处理分页，生成不同的静态页面。这种分页方法分页准确，但是需要人工手动添加分页符，工作量大。
+自动分页：PHP程序会根据设置好的分页符将内容进行分页，然后生成不同的静态页面。该方法效率高，对处理不同的html代码标签要求高。
+前端JS分页：使用Javascript将长文章内容截取分段，根据请求展示不同的分段内容，达到分页效果。这种方法一次将内容读取，由前端js处理分页，体验好。
+本文实例代码讲解的是采用PHP将长文章内容分页，可以自动和手动分页。至于生成静态html页面不在本文讲解范围内，后面我们会专门讲解生成静态方面的文章介绍。
+分页类
+
+<?php     
+/*   
+*  长文章分页类      
+*/   
+    class cutpage{     
+        private $pagestr;       //被切分的内容     
+        private $pagearr;       //被切分文字的数组格式     
+        private $sum_word;      //总字数(UTF-8格式的中文字符也包括)     
+        private $sum_page;      //总页数     
+        private $page_word;     //一页多少字     
+        private $cut_tag;       //自动分页符     
+        private $cut_custom;    //手动分页符     
+        private $ipage;         //当前切分的页数，第几页     
+        private $url;     
+         
+        function __construct($pagestr,$page_word=1000){     
+            $this->page_word = $page_word;     
+            $this->cut_tag = array("</table>", "</div>", "</p>", "<br/>", "”。", "。", ".", "！", "……", "？", ",");     
+            $this->cut_custom = "{nextpage}";     
+            $tmp_page = intval(trim($_GET["ipage"]));     
+            $this->ipage = $tmp_page>1?$tmp_page:1;  
+            $this->pagestr = $pagestr; 
+        }     
+         
+        function cut_str(){     
+            $str_len_word = strlen($this->pagestr);     //获取使用strlen得到的字符总数     
+            $i = 0;     
+            if ($str_len_word<=$this->page_word){   //如果总字数小于一页显示字数     
+                $page_arr[$i] = $this->pagestr;     
+            }else{     
+                if (strpos($this->pagestr, $this->cut_custom)){     
+                    $page_arr = explode($this->cut_custom, $this->pagestr);     
+                }else{     
+                    $str_first = substr($this->pagestr, 0, $this->page_word);   //0-page_word个文字    cutStr为func.global中的函数     
+                    foreach ($this->cut_tag as $v){     
+                        $cut_start = strrpos($str_first, $v);       //逆向查找第一个分页符的位置     
+                        if ($cut_start){     
+                            $page_arr[$i++] = substr($this->pagestr, 0, $cut_start).$v;     
+                            $cut_start = $cut_start + strlen($v);     
+                            break;     
+                        }     
+                    }     
+                    if (($cut_start+$this->page_word)>=$str_len_word){  //如果超过总字数     
+                        $page_arr[$i++] = substr($this->pagestr, $cut_start, $this->page_word);     
+                    }else{     
+                        while (($cut_start+$this->page_word)<$str_len_word){     
+                            foreach ($this->cut_tag as $v){     
+                                $str_tmp = substr($this->pagestr, $cut_start, $this->page_word);        //取第cut_start个字后的page_word个字符     
+                                $cut_tmp = strrpos($str_tmp, $v);       //找出从第cut_start个字之后，page_word个字之间，逆向查找第一个分页符的位置     
+                                if ($cut_tmp){     
+                                    $page_arr[$i++] = substr($str_tmp, 0, $cut_tmp).$v;     
+                                    $cut_start = $cut_start + $cut_tmp + strlen($v);     
+                                    break;     
+                                }     
+                            }       
+                        }     
+                        if (($cut_start+$this->page_word)>$str_len_word){     
+                            $page_arr[$i++] = substr($this->pagestr, $cut_start, $this->page_word);     
+                        }     
+                    }     
+                }     
+            }     
+            $this->sum_page = count($page_arr);     //总页数     
+            $this->pagearr = $page_arr;   
+            return $page_arr; 
+        }     
+        //显示上一条，下一条     
+        function pagenav(){     
+            $this->set_url();     
+            $str = ''; 
+             
+            //$str .= $this->ipage.'/'.$this->sum_page; 
+             
+            for($i=1;$i<=$this->sum_page;$i++){ 
+                if($i==$this->ipage) { 
+                    $str.= "<a href='#' class='cur'>".$i."</a> "; 
+                }else{ 
+                    $str.= "<a href='".$this->url.$i."'>".$i."</a> "; 
+                } 
+            } 
+             
+                    
+            return $str;     
+        }     
+           
+        function set_url(){     
+            parse_str($_SERVER["QUERY_STRING"], $arr_url);     
+            unset($arr_url["ipage"]);     
+            if (empty($arr_url)){     
+                $str = "ipage=";     
+            }else{     
+                $str = http_build_query($arr_url)."&ipage=";     
+            }     
+            $this->url = "http://".$_SERVER["HTTP_HOST"].$_SERVER["PHP_SELF"]."?".$str;     
+        }     
+    }     
+?> 
+以上cutpage类可以非常好的处理内容分页，能处理不同html标签给分页带来的麻烦。如果内容设置了分页符{nextpage}，则会优先自动将内容按分页符分页。
+调用分页类
+我们假设读取了文件text.txt的文章内容，实际项目中应该是表单提交长内容或者读取数据库相关表的内容。然后实例化分页类，然后根据当前页调用对应分页的内容并输出，以及输出分页条。
+<?php 
+$content = file_get_contents('text.txt');     
+    $ipage = $_GET["ipage"]? intval($_GET["ipage"]):1;     
+    $CP = new cutpage($content);     
+    $page = $CP->cut_str();   
+    echo $page[$ipage-1];    
+    echo $CP->pagenav(); 
+?> 
+值得注意的是，使用统一UTF-8的文件编码，会让你的编码工作更加顺畅。
