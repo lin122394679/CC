@@ -1,0 +1,21 @@
+（1）php对象转数组的方法（object 转 array）：
+/**
+ * object 转 array
+ */
+function object_to_array($obj){
+	$_arr=is_object($obj)?get_object_vars($obj):$obj;
+	foreach($_arr as $key=>$val){
+		$val=(is_array($val))||is_object($val)?object_to_array($val):$val;
+		$arr[$key]=$val;
+	}
+	return $arr;
+}
+（2）php Json字符转数组的方法（json 转 array）：
+如果是个 json 字符串的话，可直接通过 json_decode 函数将字符串转换成数组。
+json_decode (PHP 5 >= 5.2.0, PECL json >= 1.2.0)
+json_decode — 接受一个 JSON 格式的字符串并且把它转换为 PHP 变量
+mixed json_decode(string $json[,bool $assoc])
+参数:
+json  待解码的 json string 格式的字符串。
+assoc  当该参数为 TRUE 时，将返回一个数组（关联数组）形式的结果，默认为false，返回的是一个对象。
+
