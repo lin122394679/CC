@@ -1,0 +1,19 @@
+virtualbox安装centos69，配置虚拟机网络
+1.切换到cd /etc/sysconfig/network-scripts/目录
+修改配置文件时，备份源文件；
+2.将ifcfg-eth0备份为ifcfg-eth0.bak
+cp ifcfg-eth0 ifcfg-eth0.bak
+3.修改配置文件(ifcfg-eth0)
+修改内容： ONBOOT=yes
+添加内容：DNS1=8.8.8.8
+4.操作网卡(启动、停止、重启)
+启动: /etc/init.d/network start
+停止：/etc/init.d/network stop
+重启：/etc/init.d/network restart
+5.使用工具连接虚拟机
+推荐putty，轻量、方便、免费(无需安装)
+6.开关机命令：
+重启： shutdown -r now 或 reboot
+关机：shutdown -h now 或 poweroff 或halt
+7.最常用命令及操作：
+ifconfig：查看或配置网卡信息（包括ip）
