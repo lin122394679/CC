@@ -1,0 +1,245 @@
+在php页面缓存主要用到的是ob系列函数，如ob_start(),ob_end_flush(),ob_get_contents(),但是更高级的缓存是不使用这些函数的，本文章最后一个实现就有讲到，大家可参考一下。
+
+ob_start()：页面缓存开始的标志，此函数一下的内容直至ob_end_flush()或者ob_end_clean()都保存在页面缓存中；
+
+ob_get_contents()：用来获取页面缓存中的内容，获取到以后呢，我们就可以想怎么处理这些内容都行了，过滤字段啦，匹配内容啦，都可以~~~ ：）
+
+ob_end_flush()：表示页面缓存结束。并且经我验证，缓存的内容将输出到当前页面上，也就是可以显示缓存内容。
+
+用此三个php函数，就可以实现强大的功能。如果数据库查询量较大，可以用cache来解决这个问题。
+
+下面是编码部分。
+
+1.初始化函数，一般是设置页面缓存路径、缓存文件命名格式等，可按个人喜好自定义。这里用到的识别ID是经加密的$_SERVER[REQUEST_URI]参数。这个函数中最后还有一个if判断：若未过缓存期，则加载缓存文件，否则加载源文件。
+代码如下
+function page_init()
+{
+$url = $_SERVER['REQUEST_URI'];//子url，该参数一般是唯一的
+$pageid = md5($url);
+$dir = str_replace('/','_',substr($_SERVER['SCRIPT_NAME'],1,-4));
+//目录命名方式，如exp_index
+if(!file_exists($pd = PAGE_PATH.$dir.'/'))@mkdir($pd,0777) or die("$pd目录创建失败");
+//如cache/page/exp_index/
+define('PAGE_FILE',$pd.$pageid.'.html');
+　　//如cache/page/exp_index/cc8ef22b405566745ed21305dd248f0e.html
+$contents = file_get_contents(PAGE_FILE);//读出
+if($contents && substr($contents, 13, 10) > time() )//对应page_cache()函数中加上的自定义头部
+{
+echo substr($contents, 27);
+exit(0);
+}
+return true;
+}
+
+2.页面缓存函数，这里使用到一个技巧：在缓存文件的内容中加上一个头部信息--过期时间，所以每次只需要对头部中的过期时间和当前时间进行比较（在page_init()函数中进行）就能判断缓存是否过期了。
+代码如下
+
+function page_cache($ttl = 0)
+{
+$ttl = $ttl ? $ttl : PAGE_TTL;//缓存时间，默认3600s
+$contents = ob_get_contents();//从缓存中获取内容
+$contents = "<!--page_ttl:".(time() + $ttl)."-->n".$contents;
+　　//加上自定义头部：过期时间=生成时间+缓存时间
+file_put_contents(PAGE_FILE, $contents);//写入缓存文件中
+ob_end_flush();//释放缓存
+}
+　
+3.函数使用，注意这两个函数有先后执行顺序，还有别忘了ob_start()
+代码如下
+
+<?php
+page_init();//页面缓存初始化
+ob_start();//开启缓存
+...//代码段
+page_cache(60);//一般是最后一行
+?>
+
+例2
+下面做个示例来说明PHP页面缓存技术：
+代码如下
+<?php
+$_time =10;
+$dir="D:php";
+function cache_start($_time, $dir)
+{
+$cachefile = $dir.'/'.sha1($_SERVER['REQUEST_URI']).'.html';
+$cachetime = $_time;
+ob_start();
+if(file_exists($cachefile) && (time()-filemtime($cachefile) < $cachetime))
+{
+include($cachefile);
+ob_end_flush();
+exit;
+}
+}
+function cache_end($dir)
+{
+$cachefile = $dir.'/'.sha1($_SERVER['REQUEST_URI']).'.html';
+$fp = fopen($cachefile, 'w');
+fwrite($fp, ob_get_contents());
+fclose($fp);
+ob_end_flush();
+}
+cache_start($_time, $dir);
+//以下是输出的内容，放在cache_start和cache_end两个方法之间
+for ($i=0;$i<5;$i++)
+{
+echo $i;
+sleep(1);
+}
+cache_end($dir);
+?>
+
+例
+利用生成文件做缓存
+代码如下
+<?php
+ob_start();
+/**
+* @author 何名慧
+* @copyright 2009-3-13
+* @param string $cache_folder 缓文件夹
+* @param int $cache_create_time 文件缓存时间
+* @example $cache=new Esj_Cache('./_cache',100)
+* @example $cache->read_cache() 读取缓存并输出
+* @example $cache->creatre_cache() 创建缓存文件(放在文件未尾)
+* @example $cache->list_file() 返回所有缓存文件列表
+* @example $cache->del_file() 删除所有缓存文件
+*/
+class Esj_Cache{
+private $cache_folder=null;//cacher文件夹
+private $wroot_dir=null;//站点目录
+private $cacher_create_time=null;//cacher文件的建立时间
+public function __construct($cache_foldername,$cacher_time=100)
+{
+ob_start();
+$this->wroot_dir=$_SERVER['DOCUMENT_ROOT'];
+$this->cache_folder=$cache_foldername;
+$this->cacher_create_time=$cacher_time;
+}
+public function read_cache()
+{
+try {
+if(self::create_folder($this->cache_folder))
+{
+self::get_cache();//输出缓存文件信息
+}else
+{
+echo "缓存文件夹创建失败!";
+return false;
+}
+}catch(Exception $e){
+echo $e;
+return false;
+}
+}
+//测试缓存文件夹是否存在
+private function exist_folder($foler)
+{
+if(file_exists($this->wroot_dir."/".$foler)){
+return true;
+}else {
+return false;
+}
+}
+//建立一个新的文件夹
+private function create_folder($foler)
+{
+if(!self::exist_folder($foler))
+{
+try{
+mkdir($this->wroot_dir."/".$foler,0777);
+chmod($this->wroot_dir."/".$foler,0777);
+return true;
+}catch (Exception $e)
+{
+self::get_cache();//输出缓存
+return false;
+}
+return false;
+}
+else
+{
+return true;
+}
+}
+//读取缓存文件
+private function get_cache()
+{
+$file_name=self::get_filename();
+if (file_exists($file_name)&&((filemtime($file_name)+$this->cacher_create_time) > time()))
+{
+$content=file_get_contents($file_name);
+if($content)
+{
+echo $content;
+ob_end_flush();
+exit;
+}else
+{
+echo "文件读取失败";
+exit;
+}
+}
+}
+//返回文件的名字
+private function get_filename()
+{
+$filename=$file_name=$this->wroot_dir.'/'.$this->cache_folder.'/'.md5($_SERVER['QUERY_STRING']).".html";
+return $filename;
+}
+//建立缓存文件
+public function create_cache()
+{
+$filename=self::get_filename();
+if($filename!="")
+{
+try{
+file_put_contents($filename,ob_get_contents());
+return true;
+}catch (Exception $e)
+{
+echo "写缓存失败:".$e;
+exit();
+}
+return true;
+}
+}
+// 取得缓存中的所有文件
+public function list_file()
+{
+$path=$this->cache_folder;
+if ($handle = opendir($path)) {
+while (false !== ($file = readdir($handle))) {
+if($file!="." && $file!="..") {
+$path1=$path."/".$file;
+if(file_exists($path1))
+{
+$result[]=$file;
+}
+}
+}
+closedir($handle);
+}
+return $result;
+}
+//删除缓存中的所有文件
+public function del_file()
+{
+$path=$this->cache_folder;
+if ($handle = opendir($path)) {
+while (false !== ($file = readdir($handle))) {
+if($file!="." && $file!="..") {
+$path1=$path."/".$file;
+if(file_exists($path1))
+{
+unlink($path1);
+}
+}
+}
+closedir($handle);
+}
+return true;
+}
+}
+?>
