@@ -1,0 +1,78 @@
+本篇文章主要分项了一下关于php类中的$this，static，final，const，self这几个关键字使用方法。
+$this
+$this表示当前实例，在类的内部方法访问未声明为const及static的属性时，使用$this->value='phpernote';的形式。常见用法如：
+$this->属性
+$this->方法
+举例如下：
+<?php
+class MyClass{
+	private $name;
+	public  function __construct($name){
+		$this->name=$name;
+	}
+	public function getname(){
+		return $this->name;
+	}
+	public  function printName(){
+		echo $this->getname();
+	}
+}
+$myclass= new MyClass("I Like PHP");
+$myclass->printName();//输出：I Like PHP
+?>
+在类里面调用当前类的属性和方法有三种方法，分别是self、parent、$this，这三个关键字的区别是：self用来指向当前的类；parent用于指向当前类的父类，可以使用该关键字调用父类的属性和方法；$this用来在类体内调用自身的属性和方法。
+static
+关键字可以是self（在类内部调用静态成员时所使用）静态成员所在的类名（在类外调用类内部的静态成员时所使用）
+声明一个静态变量如下：
+static $val='';
+只存在于函数作用域的变量，函数执行之后变量的值不会丢失，只会初始化一次，初始化静态变量不能使用表达式，不用全局变量代替是因为全局变量会被所有函数访问容易造成维护不宜。
+在类中使用static有两种主要用途、定义静态成员和定义静态方法。静态成员只保留一个变量的值，这个值对所有实例都是有效的，如下：
+<?php
+class MyObject{
+	public static $myStaticVar=0;
+	function myMethod(){
+		self::$myStaticVar+=2;
+		echo self::$myStaticVar;
+	}
+}
+$instance1=new MyObject();
+$instance1->myMethod();
+$instance2=new MyObject();
+$instance2->myMethod();
+//结果将分别打印2、4
+
+
+结果将是：
+您是滴0位访客
+您是滴1位访客
+您是滴2位访客
+另外需要注意的是如果类的方法是static的，他所访问的属性也必须是static的。
+final
+最终的类和方法，不能继承，该关键字修饰的方法不能被重写。一般用法如下：
+<?php
+final class MyClass{//此类将不允许被继承
+	final function fun1(){......}//此方法将不允许被重写
+}
+
+const
+在类的内部方法访问已经声明为const及static的属性时，需要使用self::$name的形式调用。举例如下：
+<?php
+class clss_a{
+	private static $name="static class_a"; 
+	const PI=3.14; 
+	public $value; 
+	public static function getName(){ 
+		return self::$name; 
+	} 
+	//这种写法有误，静态方法不能访问非静态属性 
+	public static function getName2(){ 
+		return self::$value; 
+	} 
+	public function getPI(){ 
+		return self::PI; 
+	}
+}
+
+注意const属性的申明格式是const PI=3.14，而不是const $PI=3.14。
+self
+self表示类本身，指向当前的类。通常用来访问类的静态成员、方法和常量。
