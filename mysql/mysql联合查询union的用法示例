@@ -1,0 +1,26 @@
+web项目中经常会碰到整站搜索的问题，即客户希望在网站的搜索框中输入一个词语，然后在整个网站中只要包含这个词的页面都要出现在搜索结果中。由于一个web项目不可能用一张表就全部搞定的，所以这里一般都是要用union联合搜索来解决整个问题的。
+下面列举一下本次使用的union联合搜索的sql语句，方便下次备忘。
+select * from 
+
+(SELECT `id`,`subject` FROM `article` WHERE `active`='1' AND `subject` LIKE '%调整图片%' ORDER BY `add_time` DESC) 
+
+as t1
+
+union all
+
+select * from 
+
+(SELECT `id`,`class_name` AS `subject` FROM `web_class` WHERE `active`='1' AND `class_name` LIKE '%调整图片%' ORDER BY `class_id` DESC) 
+
+as t2
+
+union
+
+select * from 
+
+(SELECT `id`,`subject` FROM `article` WHERE `active`='1' AND (`subject` LIKE '%调整%' OR `subject` LIKE '%图片%') ORDER BY `add_time` DESC) 
+
+as t3;
+
+以上SQL语句的联合查询主要用到了union all和union，至于这两者的区别就是union all会列举所有符合条件的查询结果，而union会将所有符合条件的查询结果做一下去除重复结果的筛选。
+对于以上SQL语句的解释就是由于article表和web_class表分属两个不同的表，所以这里不用去除重复结果。然而以上联合查询的第三个分支的sql查询语句是由分词然后组合出来的查询语句，这条sql语句查询的结果是肯定包含第一个分支sql语句的查询结果的，这里就显得没必要了，所以没有使用all而去掉重复的查询结果。
