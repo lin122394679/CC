@@ -1,0 +1,39 @@
+最近开发微信公众平台，公众号调用各接口时都需使用access_token，access_token是公众号的全局唯一接口调用凭据，开发时需要进行妥善保存。 access_token有效期为7200秒 ，重复获取将导致上次获取的access_token失效。
+由于微信对获取access_token的api调用次数做了限制，建议开发者全局存储与更新access_token，频繁刷新access_token会导致api调用受限，影响自身业务。
+那么有什么好的解决access_token存储和刷新的办法呢？ 我的办法是：计划任务定时刷新获取access_token，然后将access_token保存到服务器本地，保存方式可以是文件、数据库或缓存中。
+下面我使用PHP来获取access_token，并保存到本地文件中。建立一个access.php，代码如下：
+$url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=".AppID."&secret=".AppSecret; 
+ 
+$result = http_request($url); 
+//生成文件，保存token 
+$dir = __DIR__; //真实路径，crontab命令的php执行在cli模式下，不能正确识别相对路径，所以使用__DIR__ 
+$filename = $dir."/access_token.php"; 
+create_file($filename, $result); 
+ 
+function http_request($url,$data = null){ 
+    $curl = curl_init(); 
+    curl_setopt($curl, CURLOPT_URL, $url); 
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE); 
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE); 
+    if (!empty($data)){ 
+        curl_setopt($curl, CURLOPT_POST, 1); 
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $data); 
+    } 
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1); 
+    $output = curl_exec($curl); 
+    curl_close($curl); 
+    return $output; 
+} 
+ 
+//生成文件 
+function create_file($filename, $content){ 
+    $fp = fopen($filename, "w"); 
+    fwrite($fp, "" . $content); 
+    fclose($fp); 
+}
+
+以上代码中AppID和AppSecret这两个常量是由微信公众平台提供，可以登录到微信公众平台的基本配置里获取。获取到的access_token被保存到文件access_token.php中，注意这个文件内容不要被用户访问到。
+接下来，我们设置定时任务，我们以Linux的CentOS为例，使用crontab设置计划任务。
+5 * * * * /usr/local/bin/php -f /home/web/access.php >> /dev/null 2>&1
+以上命令设置了每隔1小时，即每小时的第05分钟执行access.php。
+这样，我们就可以保证access_token的正常获取和使用，不用频繁的去刷新微信服务器了。
