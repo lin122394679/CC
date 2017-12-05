@@ -1,0 +1,63 @@
+我们跟踪用户信息时需要用到Session和Cookie，比如用户登录验证、记录用户浏览历史，存储购物车数据，限制用户会话有效时间等。今天我们来了解下PHP是如何操作Session和Cookie的。
+Session
+PHP的$_SESSION可以存储当前用户数据信息，用户访问WEB网站的时候，PHP会给每个访问的用户创建一个session ID，该ID是唯一ID，保存在客户机上，而用户的会话数据是保存到服务端的，PHP可以对每个不同的用户信息进行存储，当会话过期后，用户session信息也会失效。
+使用Session，在使用PHP session时，一定要在页头加上session_start()，告诉服务器开始使用session了，而且在它之前应该没有任何输出，否则会报错。
+<?php 
+session_start();  
+ 
+//PHP 代码... 
+?> 
+PHP设置与获取Session
+我们可以使用PHP的$_SESSION来设置和获取Session数据，如：
+<?php 
+session_start();   
+ 
+//设置一个session值 
+$_SESSION["name"] = "Hello";  
+ 
+//将session以数组形式保存 
+$_SESSION["arr"] = array('name' => 'Hello', 'url' => 'http://www.helloweba.com', 'type'=> 'website'); 
+?> 
+一旦储存了Session数据，我们就可以在网站上使用Session，比如我们在另一个页面就可以获取Session数据：
+<?php 
+session_start();   
+ 
+//获取保存的Session name  
+echo $_SESSION["name"]; 
+ 
+//打印数组session 
+print_r($_SESSION["arr"]); 
+?> 
+PHP删除Session
+当不再使用Session时，我们可以使用PHP将session数据删除和清空，方法如下：
+<?php 
+unset($_SESSION["name"]); 
+?> 
+如果要清空当前用户所有的Session信息可以使用以下代码：
+<?php 
+session_destroy(); 
+?> 
+Cookie
+Cookie是由用户访问的网站服务端给当前客户机上创建的一个临时文件，用来保存用户信息，以便用户下次继续访问该网站时，网站服务器能识别用户信息，常见的Cookie用来保存用户界面，用户ID等数据。
+PHP设置Cookie
+我们可以使用PHP的setcookie()在客户端创建cookie，这个函数提供主要的三个参数，cookie名称，值和有效时长。
+<?php 
+$cookie_val = 'Chrome';  
+setcookie("browser", $cookie_val, time()+3600);  
+?> 
+运行以上代码，将会创建一个名称为Chrome的Cookie，并且在客户端保存1个小时，1小时后该cookie信息失效。
+PHP接收Cookie
+当Cookie创建后，我们很容易就可以获取到cookie值，使用PHP的$_COOKIE，用法如下：
+<?php 
+if(isset($_COOKIE['browser'])) { 
+    echo '您的浏览器是：' . $_COOKIE['browser']; 
+} 
+?> 
+PHP删除Cookie
+如果你想彻底在你的机器上删除保存的cookie信息，可以使用以下代码：
+<?php 
+setcookie("browser", "", time()-3600); 
+?> 
+以上代码将名称为browser的cookie清空，并将有效期设置到1小时前，完全清空了cookie信息。
+此外前端Javascript也有操作cookie的例子，本站有文章介绍。
+本文从初学者角度考虑，讲解了PHP入门级的知识：Session和Cookie的应用，我们不必去深究其原理，只要会用就行。2015快要来了，接下来Helloweba打算将几个前端与后端PHP的交互项目分享给大家，当然会用到Session和Cookie了，像WEB聊天室、在线视频、HTML5在线直播等等，敬请期待。
