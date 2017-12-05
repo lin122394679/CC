@@ -1,0 +1,7 @@
+一个小小的功能函数，获取php web程序的内存占用情况，具体代码很简单，如下：
+$_LANG['memory_info']='占用内存 %0.3f MB';
+/* 内存占用情况 */
+if($_LANG['memory_info']&&function_exists('memory_get_usage')){
+	echo sprintf($_LANG['memory_info'], memory_get_usage()/1048576);
+}
+
