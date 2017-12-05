@@ -1,0 +1,20 @@
+通过ssh传输文件
+scp -rp /path/filename username@remoteIP:/path #将本地文件拷贝到服务器上
+scp -rp username@remoteIP:/path/filename /path #将远程文件从服务器下载到本地
+
+tar cvzf - /path/ | ssh username@remoteip "cd /some/path/; cat -> path.tar.gz" #压缩传输
+tar cvzf - /path/ | ssh username@remoteip "cd /some/path/; tar xvzf -" #压缩传输一个目录并解压
+
+rsync -avh /path/to/file/or/dir user@host:/path/to/dir/or/file
+rsync -avh user@host:/path/to/file/or/dir /path/to/file/or/dir
+
+
+
+备份当前系统到另外一个硬盘　
+sudo rsync -Pa / /media/disk1 --exclude=/media/* --exclude=/home/* --exclude=/sys/* --exclude=/tmp/* --exclude=/proc/* --exclude=/mnt/*
+
+使用ssh方式同步远程数据到本地目录
+rsync -Pa -I --size-only --delete --timeout=300 Remote_IP:/home/ubuntu/back /backup
+
+使用ftp方式同步远程数据到本地目录
+lftp -c "open Remote_IP;user UserName Password;set cache:enable false;set ftp:passive-mode false;set net:timeout 15;mirror -e -c /back /backup;"
