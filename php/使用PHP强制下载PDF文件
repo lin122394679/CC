@@ -1,0 +1,24 @@
+我们有时会遇到这样一种情况，当需要下载一个PDF文件时，如果不经处理会直接在浏览器里打开PDF文件，然后再需要通过另存为才能保存下载文件。本文将通过PHP来实现直接下载PDF文件。
+实现原理：我们仅仅只需要修改页面HTTP头，把Content-Type设置为force-download，问题即可解决。请看代码：
+forceDownload("pdfdemo.pdf"); 
+function forceDownload($filename) { 
+ 
+    if (false == file_exists($filename)) { 
+        return false; 
+    } 
+     
+    // http headers 
+    header('Content-Type: application-x/force-download'); 
+    header('Content-Disposition: attachment; filename="' . basename($filename) .'"'); 
+    header('Content-length: ' . filesize($filename)); 
+ 
+    // for IE6 
+    if (false === strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE 6')) { 
+        header('Cache-Control: no-cache, must-revalidate'); 
+    } 
+    header('Pragma: no-cache'); 
+         
+    // read file content and output 
+    return readfile($filename);; 
+} 
+为了方便，我写了一个函数forceDownload()，然后通过调用该函数即可。请点击这里看演示DEMO。
