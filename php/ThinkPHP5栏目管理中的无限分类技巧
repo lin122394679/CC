@@ -1,0 +1,77 @@
+ThinkPHP5栏目管理中的无限分类技巧
+2017年08月21日浏览量:101
+对分类数据表的信息读取与展示,我们即可以控制器完成，也可以在对应的模型中完成。本案例，我们在模型中完全成。况且，对数据表的增，删改查操作，本来就是模型的本职工作。
+首先声明一下，我们采用递归的方式来实现无限分类。但无限分类的实现，不是只是递归一种方式，还有一种是全路径方式，也可以实现，不过，这种方式通常用在全路径导航菜单中。所以，这里我们还是用最常见的递归函数来实现：无限分类。
+
+首先我们先创建一个静态方法:getCate，为什么要静态方式，因为静态方法执行效率高，不需要实例化，而且，分类查询是使用非常频繁的操作，很多查询都要依赖分类查询的结果。
+
+当前的getCate方法,有三个参数：
+第一个是$pid，是父类的id，默认为0，表示从顶级开始查起。
+第二个参数是返回的查询结果，我们放在一个数组中返回，注意，这个变量是引入方式传入的。
+在递归函数中，返回结果有三种方式：
+第一种就是大家比较熟悉的，使用全局变量$_GLOBALS[],这个方法有副作用，我们不用它；
+第二种方式也不错，是在函数中用static关键字，声明一个静态变量，它可以将每一次的递归执行结果进行累计，最后再返回，非常好理解，但占用资源过多，执行效率低；
+第三种，就是采用引用参数的方式，来返回结果，这也是目前主流的技术。尽管理解起来有难度，但执行效率是最高的，我们要玩，就玩大的，所以这里，我们就直接采用引用，来返回查询结果。
+第三个参数,可以没有，它是用来设置一下分类之间的层次显示的，可以让结果看上去更直观清晰。
+<?php
+
+namespace app\admin\model;
+
+use think\Collection;
+use think\Model;
+
+class Category extends Model
+{
+    //创建一个静态方法getCate,来获取分类信息
+
+    /**
+     * @param int $pid: 当前分类的父id
+     * @param array $result:引用返回值
+     * @param int $blank:设置分类之间的显示提示
+     */
+    public static function getCate($pid=0, &$result=[], $blank=0)
+    {
+        //1.分类表查询:$pid
+        $res = self::all(['pid'=>$pid]);
+
+        //2.自定义分类名称前面的提示信息
+        $blank += 2;
+
+        //3.遍历分类表
+        foreach ($res as $key => $value) {
+
+            //3-1自定义分类名称的显示格式
+            $cate_name = '|--'.$value->cate_name;
+            $value->cate_name = str_repeat('&nbsp;',$blank).$cate_name;
+
+            //3-2将查询到的当前记录保存到结果$result中
+            $result[] = $value;
+
+            //3-3关键:将当前记录的id，做为下一级分类的父id,$pid，继续递归调用本方法
+            self::getCate($value->id, $result, $blank);
+        }
+
+        //4.返回查询结果,调用结果集类make方法打包当前结果,转为二维数组返回
+        return Collection::make($result)->toArray();
+    }
+}
+控制器中调用代码：
+public function edit(Request $request)
+{
+    //1.获取一下分类id
+    $cate_id = $request -> param('id');
+
+    //2.查询要更新的数据
+    $cate_now = CategoryModel::get($cate_id);
+
+    //3.递归查询所有的分类信息
+    $cate_level = CategoryModel::getCate();
+
+    //4.模板赋值
+    $this -> view -> assign('cate_now', $cate_now);
+    $this -> view -> assign('cate_level', $cate_level);
+
+
+    //5.渲染模板
+    return $this -> view -> fetch('category_edit');
+}
