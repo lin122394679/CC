@@ -1,0 +1,15 @@
+php判断日期格式是否正确的方法总结，经测试没有错误。谢谢ip为202.104.68.18  ( 中国广东省广州市 电信 )的网友提供。
+function is_Date($string,$format='Y-m-d'){
+	$arr=explode('-',$string);
+	return checkdate($arr[1],$arr[2],$arr[0])?true:false;
+}
+
+该函数主要是利用了php的checkdate函数，下面对该函数做简单分析。
+语法
+checkdate(month,day,year)
+定义和用法
+checkdate() 函数验证一个格里高里日期。如果指定的值合法，则该函数返回 true，否则返回 false。
+日期在下列情况下为合法：
+month 介于且包括 1 - 12
+Day 的值在给定的 month 所应该具有的天数范围之内，闰年已经考虑进去了。
+year 介于且包括 1 到 32767
