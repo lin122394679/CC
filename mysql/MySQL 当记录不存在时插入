@@ -1,0 +1,9 @@
+在 MySQL 中，插入（insert）一条记录很简单，但是一些特殊应用，在插入记录前，需要检查这条记录是否已经存在，只有当记录不存在时才执行插入操作，本文介绍的就是这个问题的解决方案。
+答案：可以通过使用 EXISTS 条件句防止插入重复记录。
+
+INSERT INTO clients
+(client_id, client_name, client_type)
+SELECT supplier_id, supplier_name, supplier_type
+FROM suppliers
+WHERE not exists (select * from clients
+where clients.client_id = suppliers.supplier_id);
