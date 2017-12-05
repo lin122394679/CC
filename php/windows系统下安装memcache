@@ -1,0 +1,37 @@
+关于 memcache 的介绍，这里就不在多说了，读者可以参考：memcached是什么？memcache该何使用？
+（1）安装memcache首先你得下载两个文件，memcached 的安装文件和php所需要的 pecl 扩展 php_memcache.dll 文件，因为这里是介绍在 windows 下面安装 memcached ，所以你需要下载的是 memcached.exe 文件。 memcached.exe 具体下载地址为：http://code.jellycan.com/memcached/ ，这个页面上你得下载那个名为memcached-1.2.6-win32-bin.zip的文件。至于 php_memcache.dll，这里就不提供下载地址了，自己去百度搜吧，因为这个一定要和自己的php版本相同（文章下面列了几个比较常见 php_memcache.dll 版本的下载地址）。
+（2）以上所需工具准备完毕，那就可以开始安装并调试了。首先安装 memcache。
+将下载的 memcache 文件包解压放某个盘下面，比如在c:\memcached
+在终端（即cmd命令界面）下输入 "c:\memcached\memcached.exe -d install" 安装
+这个时候你可能不知道你安装的 memcache 使用的是什么端口，下面通过修改注册表将端口修改为我们指定的端口。打开注册表编辑器，找到 HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\memcached Server 下面找到一个 ImagePath 的字符串项，双击该串，在该项目值后面追加写入 -l 127.0.0.1 -m 45 -p 51321 （这里的意思即访问ip为：127.0.0.1 使用45M内存，51321为端口），修改完毕关闭注册表编辑器。
+接着命令界面里输入："c:\memcached\memcached.exe -d start" 启动 memcache 服务或者在计算机服务项里面找到memcached服务，重新启动。
+以上操作完毕，让我们来检测一下缓存服务 memcache 是否成功安装并运行了。继续在终端输入："telnet 127.0.0.1 51321"，输入完毕可能什么反应，接着输入 stats ，如果出现一堆类似下面这样的看懂或看不懂的英文，就说明 memcache 服务已经成功安装并运行了。
+STAT pid 5636
+STAT uptime 936
+STAT time 1344915126
+STAT version 1.2.6
+STAT pointer_size 32
+STAT curr_items 0
+STAT total_items 0
+STAT bytes 0
+STAT curr_connections 2
+STAT total_connections 3
+STAT connection_structures 3
+STAT cmd_get 0
+STAT cmd_set 0
+STAT get_hits 0
+STAT get_misses 0
+STAT evictions 0
+STAT bytes_read 19
+STAT bytes_written 7
+STAT limit_maxbytes 67108864
+STAT threads 1
+END
+注意：如果你的是win 7系统，有可能会提示“'telnet' 不是内部或外部命令，也不是可运行的程序”类似的信息，经排查这是因为 Win7 默认没有安装telnet功能，所以你直接用telnet命令是用不了的，你可以去“控制面板”--》“程序”---》“打开或关闭Windows功能”，勾上“telnet客户端”即可。
+（3）配置PHP。将下载的 pecl 模块包，解压后将 php_memache.dll 放到 php 目录的 ext 目录下（提示：为了防止出现一些意外错误，最好下载和 php 版本一致的模块包）。然后找到 php.ini 文件，在里面添加一行：extension=php_memcache.dll，然后重启 apache 服务器，至此 php 的 memcache 扩展包就已经安装完了。
+（4）测试 memcache 是否能在php环境下工作了。我们可以用如下一段代码做测试：
+$memcache_obj = new Memcache;
+$memcache_obj->connect('127.0.0.1', 51321); 
+$memcache_obj->set('var_key', 'memcache 测试!',MEMCACHE_COMPRESSED, 50);
+echo $memcache_obj->get('var_key');
+如果正常输出 “memcache 测试!” 说明你已经顺利的为你的php环境搭建好了memcache服务了。注意这里可能会报“Class 'Memcache' not found in...”类的错误，这个经测试是因为扩展包和你的php环境不一致造成的，请重新下载一个和你的php环境一直的扩展包就行了。
