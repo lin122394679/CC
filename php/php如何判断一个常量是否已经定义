@@ -1,0 +1,17 @@
+如何判断一个php常量是否已经定义过了，突然之间还有点迷茫，晕，特意查了下手册，备案本次总结结果如下：
+（1）判断常量是否存在
+if(defined('MYCONSTANT')){
+	echo MYCONSTANT; 
+}
+
+（2）判断变量是否定义
+if(isset($myvar)){
+	echo "存在变量$myvar."; 
+}
+
+（3）判断函数是否存在
+if(function_exists('imap_open')){
+	echo "存在函数imag_open"; 
+}else{ 
+	echo "函数imag_open不存在"; 
+}
