@@ -1,0 +1,33 @@
+ PHP_EOL
+
+换行符
+
+unix系列用 \n
+
+windows系列用 \r\n
+
+mac用 \r
+
+PHP中可以用PHP_EOL来替代，以提高代码的源代码级可移植性
+
+如：
+	
+<?php
+    echo PHP_EOL;
+    //windows平台相当于    echo "\r\n";
+    //unix\linux平台相当于    echo "\n";
+    //mac平台相当于    echo "\r";
+
+类似常用的还有
+
+DIRECTORY_SEPARATOR
+
+可以用函数get_defined_constants()来获取所有PHP常量
+
+1
+2
+	
+<?php
+    print_r(get_defined_constants());//get_defined_constants()返回所有常量数组
+
+更多请参考：http://cn.php.net/manual/en/reserved.constants.php
