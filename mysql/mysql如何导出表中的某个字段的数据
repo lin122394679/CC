@@ -1,0 +1,7 @@
+导出数据库中的数据的时候，有时候我们不需要将表中数据全部导出而只需要导出部分字段数据的时候该如何操作呢？下面以一个例子说明如何进行这种操作。
+假设现有一个数据表（news）有 id，title，content 三个字段，现在只需要导出 content字段的内容，则可以通过如下两条命令来完成这个任务。
+select `content` from `news` into outfile "d:/news.sql";
+
+或者：
+
+LOAD DATA INFILE 'd:/news.sql' INTO TABLE `news`(`content`);
