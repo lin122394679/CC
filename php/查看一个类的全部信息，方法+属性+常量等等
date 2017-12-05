@@ -1,0 +1,7 @@
+    public function read(){
+       $request = Request::instance();
+        echo '<pre>';
+//        print_r($request);
+        $ref = new \ReflectionClass($request);
+        \Reflection::export($ref);
+    }
