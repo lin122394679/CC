@@ -1,0 +1,68 @@
+工作间隙写了个文件锁的类，用于解决并发的一些问题。
+<?php
+/**
+ * 用于解决PHP在并发时候的锁控制，不同的锁之间并行执行，类似mysql innodb的行级锁
+ */
+class FileLock{
+    //文件锁存放路径
+    private $path='';
+    //文件句柄
+    private $fp='';
+    //锁文件
+    private $lockFile='';
+    /**
+     * 构造函数
+     * @param string $path 锁的存放目录
+     * @param string $name 锁 KEY
+     */
+    public function __construct($name,$path=''){
+		if(empty($path)) $this->path=dirname(__FILE__).'/';
+		else $this->path=$path;
+        $this->lockFile=$this->path.md5($name).'.lock';
+    }
+	
+    /**
+     * 加锁
+     */
+    public function lock(){
+		$this->fp=fopen($this->lockFile,'a+');
+		if($this->fp===false){
+			return false;
+		}
+		return flock($this->fp,LOCK_EX);//获取独占锁
+    }
+     
+    /**
+     * 解锁
+     */
+    public function unlock(){
+		if($this->fp!==false){
+			@flock($this->fp,LOCK_UN);
+			clearstatcache();
+		}
+		@fclose($this->fp);
+		@unlink($this->lockFile);
+    }
+}
+
+文件锁类使用示例：
+<?php
+$userid=21;
+$article_id=108;
+
+//对业务请求加锁
+$lock=new FileLock($userid.$article_id);
+$lockResult=$lock->lock();
+
+if(!$lockResult){
+    echo '当前请求速度过快，请稍后访问！';
+	$lock->unlock();
+	exit;
+}
+
+/*
+ 正常的业务逻辑处理
+*/
+
+//业务逻辑处理完毕解锁
+$lock->unlock();
