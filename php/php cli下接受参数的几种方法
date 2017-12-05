@@ -1,0 +1,33 @@
+php cli（命令行模式下）接受参数有多种方法，下面分享两种具体的方法。
+（1）使用$argv接受参数
+<?php
+//文件名：cli.php
+//注意以下两个变量仅在 register_argc_argv 打开时可用
+print_r($argc); //CLI下获取参数的数目，最小值为 1
+print_r($argv); //CLI下传递给脚本的参数数组，第一个参数总是当前脚本的文件名，因此 $argv[0] 就是脚本文件名
+例如：
+php cli.php a b c abc
+结果：
+5Array
+(
+    [0] => cli.php
+    [1] => a
+    [2] => b
+    [3] => c
+    [4] => abc
+)
+ 
+（2）使用getopt()函数获取参数
+<?php
+//文件名：cli.php
+//获取 -a -b -c参数
+print_r(getopt('a:b:c:'));
+例如：
+php cli.php -a x -b y -c z
+结果：
+Array
+(
+    [a] => x
+    [b] => y
+    [c] => z
+)
