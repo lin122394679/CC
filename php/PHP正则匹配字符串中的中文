@@ -1,0 +1,89 @@
+我们先要明白
+
+中文双字节字符编码范围
+1. GBK (GB2312/GB18030)
+x00-xff GBK双字节编码范围
+x20-x7f ASCII
+xa1-xff 中文 gb2312
+x80-xff 中文 gbk
+
+2. UTF-8 (Unicode)
+u4e00-u9fa5 (中文)
+x3130-x318F (韩文
+xAC00-xD7A3 (韩文)
+u0800-u4e00 (日文)
+
+获取指定的中文与字符
+例1
+代码如下
+<?php
+$str = '正则如何匹配中文字在某中文字符串中？';
+preg_match("/中/",$str,$regs);
+print_r($regs);
+?>
+输出
+Array
+(
+[0] => 中
+)
+
+例2
+代码如下
+<?php
+$str = '这里是中文 this is English';
+//把中文变成红色
+echo preg_replace("/([x80-xff].)/","<font color=red>1</font>",$str);
+//把非中文变成红色
+echo preg_replace("/([x20-x7f])/","<font color=red>1</font>",$str);
+?>
+
+
+签里面有中文、英文、数字等混排，则需要对汉字进行特殊处理，由于PCRE不支持U P L之类的perl字符串处理转义，使用16进制或者Unicode进行处理，范例如下：
+
+代码如下
+
+$str = "之二宽阔的甘家口东#标签1#标签2 #标签3。#标签4,都发$1234 ￥xc,cvm , ￥12,dflksjf如何#标签5.x #tag6.cvxcv“";
+preg_match_all('/#([a-zA-Z0-9x7f-xff]+)/', $str, $mat);
+print_r($mat);
+preg_match("/[x{00a5}x{ffe5}](d+)/u", $str, $mat);
+print_r($mat);
+
+最后我明白了php中utf-8编码下用正则表达式匹配汉字的最终正确表达式——/^[x{4e00}-x{9fa5}]+$/u
+代码如下 复制代码
+$str = "php编程";
+if (preg_match("/^[x{4e00}-x{9fa5}]+$/u",$str)) {
+print("该字符串全部是中文");
+} else {
+print("该字符串不全部是中文");
+}
+
+实例
+下面这款匹配中文字符串正则表达式是一款利用数组，然后 多次for把全是中文字符串的打印出来。
+*/
+
+代码如下
+$str_arr = array(
+"iameverysorry",
+"快乐编程，快乐生活",
+"php教程编程",
+"1997年香港回归",
+"英语学习abc",
+"www.php100.com"
+);
+$patt_ch = chr(0xa1) . "-" . chr(0xff);
+foreach ($str_arr as $str)
+{
+echo "字符串'$str' 是";
+if (preg_match("/^[$patt_ch]+$/", $str))
+{
+echo "<b>完全中文</b>";
+echo "<br>";
+echo "<br>";
+}
+else
+{
+echo "非完全中文";
+echo "<br>";
+echo "<br>";
+}
+}
