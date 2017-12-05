@@ -1,0 +1,180 @@
+php多进程编程
+前言
+php单进程存在的问题：
+多核处理器未充分利用，而单处理器通常需要等待其他操作完成之后才能再继续工作。 任何现代操作系统都可在幕后执行多任务，这意味着在很短时间内，计算机可以调度多个进程，以执行多个程序。
+如果我们将所有的工作都局限在一个进程中，它只能一次做一件事，这意味着我们需要将我们的单进程任务变成一个多进程任务，以便我们可以利用 操作系统的多任务处理能力。
+多进程与多线程
+在继续之前，先解释下多进程和多线程之间的区别。
+进程，是具有其自己的存储器空间，自己的进程ID号等的程序的唯一实例。
+线程，可以被认为是一个虚拟进程，它没有自己的进程ID，没有自己的内存空间，但仍然能够利用多任务。
+启用超线程的CPU,通过动态生成线程，以尽可能避免延迟，从而进一步推进。
+虽然有些人可能不同意，但大多数Unix程序员具有一定程度的不信任的线程。 Unix系统总是首选多进程，然后才是多线程，部分原因是在Unix上创建一个进程（通常称为子进程的“生成”或“分叉”）是非常快的。 在其他操作系统中，如Windows，fork相当慢，所以线程概念更受欢迎。
+考虑到这一点,毫不奇怪,所以目前只有在unix系统中支持php以fork多个进程,这个扩展是pcntl_fork函数
+php如何进行多进程编程
+在php中使用pcntl_fork扩展函数进行frok多个进程。
+pcntl_fork返回值说明
+当pcntl_fork函数被调用时,它将返回3个值。
+如果返回值为-1，则fork失败，并且没有子进程。 这可能是由于缺少内存，或者因为已经达到对用户进程数量的系统限制。
+如果返回值是大于0的任何数字，当前脚本是调用pcntl_fork（）的父级，返回值是分叉的子进程的进程ID（PID）。 最后，如果返回值为0，则当前脚本是被分叉的子节点。
+pcntl_fork执行原理
+如果你成功的执行pcntl_fork()函数，将有两个PHP副本同时执行相同的脚本。 它们都从pcntl_fork()行继续执行，最重要的是，子进程获取父进程中设置的所有变量的副本，甚至是资源。 我们忘记的一个关键的事情是，资源的副本不是一个独立的资源，他们将指向同一个事情，这可能是有问题的，更多的详情，稍后将继续讨论。
+现在，这里有一个基本使用pcntl_fork（）的例子：
+<?php
+    $pid = pcntl_fork();
+
+    switch($pid) {
+        case -1:
+            print "Could not fork!\n";
+            exit;
+        case 0:
+            print "In child!\n";
+            break;
+        default:
+            print "In parent!\n";
+    }
+?>
+上面的脚本只是在父进程和子进程中打印一条消息。 但是，它不显示父项的变量数据如何被复制到子项，它输出了2条信息，如下所示，说明已经是有2个进程在执行了(其中一个是主进程，一个是fork出来的子进程)
+[root@25f0b49dc696 wwwroot]# php fork.php 
+In parent!
+In child!
+接着看下面的例子:
+<?php
+    $pid1 = pcntl_fork(); //第一次fork
+    $pid2 = pcntl_fork(); //第二次fork
+    $pid3 = pcntl_fork(); //第三次fork
+
+    $current_process_id = posix_getpid();
+
+    echo "current_process_id===$current_process_id===pid1==$pid1===pid2===$pid2==pid3==$pid3\n";
+
+上面的例子，输出结果如下：
+current_process_id===13090===pid1==13091===pid2===13092==pid3==13093
+current_process_id===13093===pid1==13091===pid2===13092==pid3==0
+current_process_id===13092===pid1==13091===pid2===0==pid3==13094
+current_process_id===13094===pid1==13091===pid2===0==pid3==0
+current_process_id===13091===pid1==0===pid2===13095==pid3==13096
+current_process_id===13096===pid1==0===pid2===13095==pid3==0
+current_process_id===13095===pid1==0===pid2===0==pid3==13097
+current_process_id===13097===pid1==0===pid2===0==pid3==0
+分析上面的结果，
+可以看出，主进程ID是13090
+第一次fork
+主13090 ->13091
+第二次fork
+主13090 ->13092
+子13091 ->13095
+第三次fork
+主13090 ->13093
+子13091 ->13096
+子13092 ->13094
+子13095 ->13097
+至此，一共有8个进程在执行当前脚本
+接着看下面的例子:
+<?php
+    $main_process_id = posix_getpid();
+    echo "the main process id==$main_process_id\n";
+    for ($i = 1; $i <= 5; ++$i) {
+        $pid = pcntl_fork();
+        $current_process_id = posix_getpid();
+        if (!$pid) {
+            echo "child $i current process id==$current_process_id==pid==$pid\n";
+            sleep(1);
+            //sleep($i)
+            print "In child $i\n";
+            //这里设置sleep不会阻塞输出,1s后会自动结束进程
+            //sleep(1);
+            //结束当前子进程,不让子进程继续fork,不会阻止父进程继续fork
+            exit;
+        }
+        else{
+            echo "parent current process id==$current_process_id==pid==$pid\n";
+            print "In parent $i\n";
+            //fork完毕,退出父进程,不让下次参与fork，能保证执行顺序，但下一次的fork要等待子进程执行完成后才能fork
+            //exit;
+        }
+    }
+这次五个子进程被fork创建成功，并且，因为每个子进程在父进程最后设置的时候获取$ i变量的副本，脚本打印出"In child 1", "In child 2", "In child 3", "In child 4", and "In child 5".
+[root@25f0b49dc696 wwwroot]# php fork2.php 
+the main process id==13163
+parent current process id==13163==pid==13164
+In parent 1
+parent current process id==13163==pid==13165
+In parent 2
+parent current process id==13163==pid==13166
+In parent 3
+parent current process id==13163==pid==13167
+In parent 4
+parent current process id==13163==pid==13168
+In parent 5
+child 3 current process id==13166==pid==0
+child 2 current process id==13165==pid==0
+child 4 current process id==13167==pid==0
+child 5 current process id==13168==pid==0
+child 1 current process id==13164==pid==0
+[root@25f0b49dc696 wwwroot]# In child 3
+In child 4
+In child 5
+In child 2
+In child 1
+然而，一切都不是那么简单，因为有两个关键的事情要注意，当你运行上述脚本。
+首先，注意每个子脚本在打印出它的消息后调用exit。 在正常情况下，这将立即退出脚本，但在这里，它退出的是子PHP脚本，而不是父或任何其他子脚本。因此，每个其他子脚本和父脚本可以并且确实在一个孩子终止后继续执行。
+其次，当脚本运行时，它的输出可能很混乱。
+注意孩子们如何按顺序打印出他们的信息。 虽然这可能是很常见的情况，你不能依靠你的孩子被执行在一个特定的顺序。
+这是多处理器的基本原则之一：一旦产生了进程，它就是操作系统决定何时执行它以及给出多少时间。
+还要注意我如何立即返回到我的shell提示，然后调用五个孩子打印出他们的消息，尽管我显然已经有控制权。
+这样做的原因是因为虽然孩子们附着在终端上，但他们基本上是在后台运行的。 一旦父终止，命令提示符将重新出现，你可以开始执行其他程序，但是，正如你可以看到，孩子们仍然会活跃，当他们想（因为孩子们不会做）。 在没有sleep命令情况下，这将不那么明显，但是重要的是记住子进程本质上有自己的运行环境。
+PHP，像任何父母，可以使其监视其孩子，以确保他们做正确的事情。 这是通过两个新函数来实现的：
+pcntl_waitpid（），它指示PHP等待子进程，
+pcntl_wexitstatus（），它获取一个终止子进程返回的值。 我们已经看过exit（）函数，以及如何使用它来向系统返回一个值
+我们将使用这个值将值发送回父进程，然后检索使用pcntl_wexitstatus（）。
+在深入了解代码之前，让我先解释一下这些新函数是如何使用的。
+pcntl_waitpid
+int pcntl_waitpid ( int $pid , int &$status [, int $options = 0 ] )
+默认情况下，pcntl_waitpid()将导致父进程无限期地暂停，等待子进程终止。
+如果pid指定的子进程在此函数调用时已经退出（俗称僵尸进程），此函数 将立刻返回
+至少需要两个参数，$pid-父类应该等待的子进程ID，$status-用来填充子进程状态的变量
+$pid的值可以是以下之一：
+< -1    等待任意进程组ID等于参数pid给定值的绝对值的进程。例如，如果传递-1802，pcntl_waitpid将等待进程组ID为1802的任何子进程。
+-1  等待任意子进程;与pcntl_wait函数行为一致。
+0   等待任意与调用进程组ID相同的子进程。这是最常用的值。
+> 0 等待进程号等于参数pid值的子进程。也就是说，如果你传入1802，pcntl_waitpid将等待子进程1802终止。
+$status
+pcntl_waitpid()将会存储状态信息到status 参数上，这个通过status参数返回的状态信息可以用以下函数 pcntl_wifexited(), pcntl_wifstopped(), pcntl_wifsignaled(), pcntl_wexitstatus(), pcntl_wtermsig()以及 pcntl_wstopsig()获取其具体的值。
+返回值
+pcntl_waitpid()返回退出的子进程进程号，发生错误时返回-1
+返回终止子进程的PID，然后用状态变量填充子进程退出的信息。
+如果调用pcntl_waitpid并且没有子运行，则立即返回-1并且不填充状态变量。
+因此，如果0作为第一个参数传递给函数，pcntl_waitpid（）将等待它的任何子进程终止。 当它成立时，它返回子进程的PID，终止并填充第二个参数，并提供有关终止的子进程的信息。 因为我们有几个孩子，我们需要继续调用pcntl_waitpid（），直到它返回-1，每次返回一些东西，我们应该打印出来的子进程的返回值。
+从我们的子进程返回一个值就像向exit（）传递一个参数一样简单，而不仅仅是终止。 这通过pcntl_waitpid（）的返回值返回父节点，返回一个状态代码。 此状态代码不直接求值为返回值，因为它包含两个位的信息：子节点如何终止，以及如果子节点终止，则返回它的退出代码。
+现在我们只假设子节点自己终止，这意味着退出代码总是设置在pcntl_waitpid（）的返回值里面。 要从返回值提取退出代码，使用pcntl_wexitstatus（）函数，它将返回值作为其唯一参数，并返回子进程的退出代码。
+这可能听起来很复杂，但是一旦查看下一个代码项目，它应该会变得清楚。 这个例子显示了我们讨论的一切：
+<?php
+    for ($i = 1; $i <= 5; ++$i) {
+        $pid = pcntl_fork();
+
+        if (!$pid) {
+            sleep(1);
+            $current_process_id = posix_getpid();
+            print "In child $i===process_id===$current_process_id\n";
+            exit($i);
+        }
+    }
+
+    while (($pid = pcntl_waitpid(0, $status)) != -1) {
+        $status = pcntl_wexitstatus($status);
+        echo "Child $status completed==pid==$pid\n";
+    }
+?>
+上例将输出,同时也验证了pcntl_waitpid返回的pid是正确的
+In child 1===process_id===13106
+In child 5===process_id===13110
+In child 4===process_id===13109
+In child 3===process_id===13108
+In child 2===process_id===13107
+Child 4 completed==pid==13109
+Child 5 completed==pid==13110
+Child 1 completed==pid==13106
+Child 3 completed==pid==13108
+Child 2 completed==pid==13107
+注意，通过使用exit（$ i）;每个子节点返回它在屏幕上打印出来的数字作为其退出代码。 主while循环再次调用pcntl_waitpid（），直到它返回-1（没有子节点），并且对于每个终止的子节点，它使用pcntl_wexitstatus（）提取出口代码并打印出来。 注意，pcntl_waitpid（）的第一个参数是0，这意味着它将等待所有的孩子。
+运行该脚本应该停止命令提示符，直到所有五个孩子终止，这是理想的。
