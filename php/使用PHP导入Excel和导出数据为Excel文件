@@ -1,0 +1,59 @@
+有时需要将Excel表格的数据导入到mysql数据库中，我们使用PHP的一个开源项目PHP-ExcelReader可以轻松实现Excel的导入。另外将mysql数据导出为Excel与本站上篇文章中导出CSV一样，只是将逗号分割符换成制表符，并修改header信息就可以了。
+本文中，我们沿用本站文章：使用PHP导入和导出CSV文件 中实例的数据表以及html。
+1、导入XLS
+PHP-ExcelReader这是一个开源的项目，主要是来解析excel的文件，您可以到http://sourceforge.net/projects/phpexcelreader获取最新版的源码。下载之后解压，主要用到excel文件夹里面的两个文件reader.php和oleread.inc。
+导入Xls处理流程：选择xls文件->上传xls文件到服务器->通过PHP-ExcelReader解析excel->批量入库。
+include_once("excel/reader.php"); //引入PHP-ExcelReader 
+$tmp = $_FILES['file']['tmp_name']; 
+if (empty ($tmp)) { 
+    echo '请选择要导入的Excel文件！'; 
+    exit; 
+} 
+     
+$save_path = "xls/"; 
+$file_name = $save_path.date('Ymdhis') . ".xls"; //上传后的文件保存路径和名称 
+if (copy($tmp, $file_name)) { 
+    $xls = new Spreadsheet_Excel_Reader(); 
+    $xls->setOutputEncoding('utf-8');  //设置编码 
+    $xls->read($file_name);  //解析文件 
+    for ($i=2; $i<=$xls->sheets[0]['numRows']; $i++) { 
+        $name = $xls->sheets[0]['cells'][$i][0]; 
+        $sex = $xls->sheets[0]['cells'][$i][1]; 
+        $age = $xls->sheets[0]['cells'][$i][2]; 
+        $data_values .= "('$name','$sex','$age'),"; 
+    } 
+    $data_values = substr($data_values,0,-1); //去掉最后一个逗号 
+    $query = mysql_query("insert into student (name,sex,age) values $data_values");//批量插入数据表中 
+    if($query){ 
+        echo '导入成功！'; 
+    }else{ 
+        echo '导入失败！'; 
+    } 
+} 
+PHP-ExcelReader读取上传的excel文件后，返回一个数组，里面包含了表格的所有信息，你可以循环获取需要的信息。
+2、导出XLS
+导出XLS流程：读取学生信息表->循环记录构建制表符分隔的字段信息->设置header信息->导出文件（下载）到本地
+$result = mysql_query("select * from student"); 
+$str = "姓名\t性别\t年龄\t\n"; 
+$str = iconv('utf-8','gb2312',$str); 
+while($row=mysql_fetch_array($result)){ 
+    $name = iconv('utf-8','gb2312',$row['name']); 
+    $sex = iconv('utf-8','gb2312',$row['sex']); 
+    $str .= $name."\t".$sex."\t".$row['age']."\t\n"; 
+} 
+$filename = date('Ymd').'.xls'; 
+exportExcel($filename,$str); 
+exportExcel函数用于设置header信息。
+function exportExcel($filename,$content){ 
+     header("Cache-Control: must-revalidate, post-check=0, pre-check=0"); 
+    header("Content-Type: application/vnd.ms-execl"); 
+    header("Content-Type: application/force-download"); 
+    header("Content-Type: application/download"); 
+    header("Content-Disposition: attachment; filename=".$filename); 
+    header("Content-Transfer-Encoding: binary"); 
+    header("Pragma: no-cache"); 
+    header("Expires: 0"); 
+ 
+    echo $content; 
+} 
+此外，关于导入和导出Excel，还可以使用PHPExcel，这个非常强大，大家有空可以去研究，官方网站：http://www.codeplex.com/PHPExcel 导入导出都成，可以导出office2007格式，同时兼容2003
