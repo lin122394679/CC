@@ -1,0 +1,35 @@
+php实现文件下载的函数，具体函数代码如下：
+//$file 被下载文件的地址
+function download($file){
+	if(!$file||!is_file($file||!file_exists($file))){
+		echo '404';
+		exit;
+	}
+    header('Content-Type:application/octet-stream');
+	$fileName=basename($file);
+	header('Content-Disposition:attachment;filename="'.$fileName.'"');
+	$buffer='';
+	$cnt=0;
+	$handle=fopen($file,'rb');
+	if($handle===false){
+		return false;
+	}
+	while(!feof($handle)){
+		$buffer=fread($handle,1024*1024);
+		echo $buffer;
+		ob_flush();
+		flush();
+		if($retbytes){
+			$cnt+=strlen($buffer);
+		}
+	}
+	$status=fclose($handle);
+	if($retbytes&&$status){
+		return $cnt;
+	}
+	return $status;
+}
+
+注意以上检查文件是否存在是通过file_exists这个函数的，但这个函数只能检查相对于当前服务器网站目录里面的文件，如果是互联网上的远程文件，可以通过本站如下这篇文章：
+php判断远程文件是否存在的办法
+来检查文件是否存在。
