@@ -1,0 +1,6 @@
+查询数据库如何按将查询结果的汉字按首字的拼音排序？
+如果数据库使用的是GBK字符集
+$sql = 'SELECT brand_id, brand_name FROM ' . $GLOBALS['ecs']->table('brand') . ' ORDER BY brand_name';
+
+如果数据库使用的是UTF8字符集
+$sql = 'SELECT brand_id, brand_name FROM ' . $GLOBALS['ecs']->table('brand') . ' ORDER BY CONVERT(TRIM(brand_name) USING gbk)';
