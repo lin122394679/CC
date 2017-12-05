@@ -1,0 +1,23 @@
+PHP内置函数memory_get_usage()能返回当前分配给PHP脚本的内存量，单位是字节（byte）。在WEB实际开发中，这些函数非常有用，我们可以使用它来调试PHP代码性能。
+memory_get_usage()函数返回内存使用量，memory_get_peak_usage()函数返回内存使用峰值，getrusage()返回CUP使用情况。但有一点请注意，在这些函数需要在Linux上运行。
+下面我们来看一个实例：
+echo '开始内存：'.memory_get_usage(), ''; 
+$tmp = str_repeat('hello', 1000);   
+echo '运行后内存：'.memory_get_usage(), '';  
+unset($tmp);   
+echo '回到正常内存：'.memory_get_usage(); 
+输出结果：
+开始内存：147296 
+运行后内存：152456 
+回到正常内存：147296 
+例子中，我们使用str_repeat()将字符串“hello”重复了1000遍，最终来对比前后消耗的内存大小。由上面的例子可以看出，要想减少内存的占用，可以使用unset() 函数把不再需要使用的变量删除。类似还有mysql_free_result() 函数，当我们不再需要查询数据得到的结果集时，可以使用释放查询占用的内存。
+函数memory_get_usage()还可以有个参数，$real_usage，其值为布尔值。如果设置为 TRUE，获取系统分配的真实内存尺寸。如果未设置或者设置为 FALSE，将是 emalloc() 报告使用的内存量。
+在实际WEB开发中，可以用PHP memory_get_usage()比较各个方法占用内存的高低，来选择使用哪种占用内存小的方法。
+函数memory_get_usage()返回的字节数（单位为 byte(s)）。下面这个自定义函数将字节数转换成MB更容易阅读：
+function memory_usage() { 
+    $memory     = ( ! function_exists('memory_get_usage')) ? '0' : round(memory_get_usage()/1024/1024, 2).'MB'; 
+    return $memory; 
+} 
+常用的调试检测PHP代码性能的方法有：
+memory_get_usage可以分析内存占用空间。
+用microtime函数就可以分析程序执行时间。
