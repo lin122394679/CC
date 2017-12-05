@@ -1,0 +1,43 @@
+负载均衡
+1.关闭防火墙
+service iptables stop
+2、关闭selinux
+setenforce 0
+3、安装基本依赖
+yum install -y gcc pcre-devel openssl-devel
+4、	安装nginx
+useradd www -s /sbin/nologin		#创建nginx运行账户www，不允许直接登录系统
+
+tar -zxvf nginx-1.11.5.tar.gz
+cd nginx-1.11.5
+
+./configure --prefix=/usr/local/nginx --without-http_memcached_module --user=www --group=www --with-http_stub_status_module --with-http_ssl_module
+make && make install
+
+设置nginx开机启动
+cp /lnmp/src/nginx /etc/rc.d/init.d/		#拷贝启动文件
+chmod 755 /etc/rc.d/init.d/nginx		#赋予文件执行权限
+chkconfig nginx on					#设置开机启动
+service nginx start					#启动nginx
+
+5、配置nginx
+名称				IP					功能
+load balance 		192.168.1.104			#负责任务的分配
+web server01 		192.168.1.110			#实际提供web服务
+web server02 		192.168.1.111			#实际提供web服务
+
+
+http {
+upstream lb {							#连接池，存放提供web服务器地址
+server 192.168.1.110 weight=5;		#一台web服务器地址，权重5/6
+server 192.168.1.111 weight=1;		#一台web服务器地址，权重1/6
+}
+
+server {
+location / {
+proxy_pass http://lb;			#指定代理连接池
+proxy_set_header	Host $host;	#转发请求头信息
+proxy_set_header 	X-Forward-For	  $remote_addr	#转发请求IP地址
+}
+}
+}
