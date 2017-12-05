@@ -1,0 +1,72 @@
+本篇文章分享一下在mysql数据库中根据表中的单个字段或者多个字段进行查询重复数据以及删除重复数据的方法。
+当前情况下数据库中有个大表，需要查找其中的电话字段（phone）有重复的记录id，以便比较。如果仅仅是查找数据库中 phone 不重复的字段，很容易:
+SELECT min(`id`),`phone` FROM `table` GROUP BY `phone`;
+
+但是这样并不能得到有重复字段的id值，只得到了最小的一个id值。查询哪些字段是重复的也容易，例如:
+SELECT `phone`,count(`phone`) as count FROM `table` GROUP BY `phone` HAVING count(`phone`)>1 ORDER BY count DESC;
+
+但是要一次查询到重复字段的id值，就必须使用子查询了，于是使用下面的语句。
+SELECT `id`,`phone` FROM `table` WHERE `phone` in (
+
+SELECT `phone` FROM `table` GROUP BY `phone` HAVING count(`phone`)>1
+
+);
+
+
+但是这条语句在mysql中效率太差，感觉mysql并没有为子查询生成零时表。于是使用先建立零时表：
+create table `tmptable` as (
+
+SELECT `phone` FROM `table` GROUP BY `phone` HAVING count(`phone`)>1
+
+);
+
+然后使用多表连接查询：
+SELECT a.`id`, a.`phone` FROM `table` a, `tmptable` t WHERE a.`phone` = t.`phone`;
+
+结果这次结果很快就出来了。
+查询及删除重复记录的方法
+1、根据单个字段（phone）查找表中多余的重复记录，例如：
+select * from `table` where phone in (
+
+select phone from `table` group by phone having count(phone)>1
+
+);
+
+2、根据单个字段（phone）删除表中多余的重复记录，只留有 rowid 最小的记录，例如：
+delete from `table` where phone in (
+
+select phone from `table` group by phone having count(phone)>1
+
+)
+
+and rowid not in (select min(rowid) from `table` group by phone having count(phone)>1);
+3、根据多个字段（phone和name）查找表中多余的重复记录，例如：
+select * from vitae a where (a.phone,a.name) in (
+
+select phone,name from vitae group by phone,name having count(*)>1
+
+);
+
+4、根据多个字段（phone和name）删除表中多余的重复记录，只留有 rowid 最小的记录，例如：
+delete from vitae a where (a.phone,a.name) in (
+
+select phone,name from vitae group by phone,name having count(*)>1
+
+)
+
+and rowid not in (
+
+select min(rowid) from vitae group by phone,name having count(*)>1
+
+);
+
+5、根据多个字段（phone和name）查找表中多余的重复记录，不包含 rowid 最小的记录，例如：
+select * from vitae a where (a.phone,a.name) in (
+
+select phone,name from vitae group by phone,name having count(*)>1
+
+) and rowid not in (
+
+select min(rowid) from vitae group by phone,name having count(*)>1
+
+);
