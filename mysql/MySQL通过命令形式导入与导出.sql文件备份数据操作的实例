@@ -1,0 +1,34 @@
+工作中为了追求效率，关于MySQL的各种操作基本都是通过图形化界面来完成。点几下鼠标，ALL over了。但如果在特定的环境下，比如在没有装MySQL图形化管理工具又不方便下载的时候，该如何办呢？
+作者就遭遇过这种情况，下面是通过MySQL命令行的形式导入导出.sql文件来完成数据库备份操作的一个实例。做个记录，也希望能帮到有需要的朋友。
+一.首先通过cmd命令切换到MySQL命令工具的目录
+比如本次：cd D:\MySQL\bin
+二.cmd命令行下登陆MySQL
+1.D:\MySQL\bin>MySQL -h hostname -u username -p
+按ENTER键，等待然后输入密码。这里hostname为服务器的名称，如localhost，username为MySQL的用户名，如root。
+进入命令行后可以直接操作MySQL了。
+2.这里简单介绍几个MySQL查看数据库信息的常用命令
+MySQL->show databases;//显示数据库信息，有那些可用的数据库。
+MySQL->use dbname;//选择数据库
+MySQL->show tables;//显示表信息，有那些可用的表
+MySQL->describe tablename;//显示创建的表的信息
+三.命令行从数据库导出数据库文件
+1.将数据库phpernote导出到e:\MySQL\phpernote.sql文件中：
+c:\>mysqldump -h localhost -u root -p phpernote >e:\MySQL\phpernote.sql
+然后输入密码，等待一会导出就成功了，可以到目标文件中检查是否成功。
+2.将数据库phpernote中的mytable表导出到e:\MySQL\mytable.sql文件中：
+c:\>mysqldump -h localhost -u root -p phpernote mytable>e:\MySQL\mytable.sql
+3.将数据库phpernote的结构导出到e:\MySQL\phpernote_stru.sql文件中：
+c:\>mysqldump -h localhost -u root -p phpernote --add-drop-table >e:\MySQL\phpernote_stru.sql
+四.从外部文件MySQL导入数据到数据库中
+从e:\MySQL\phpernote2.sql中将文件中的SQL语句导入数据库中：
+在CMD中输入下列命令：
+c:\>mysql -h localhost -u root -p phpernote2 < e:\MySQL\phpernote2.sql
+然后输入密码，就OK了。
+五.下面谈一下关于导入文件大小限制问题的解决
+默认情况下：MySQL 导入文件大小有限制的，最大为2M，所以当文件很大时候，直接无法导入，下面就这个问题的解决列举如下：
+1.在php.ini中修改相关参数：
+影响MySQL导入文件大小的参数有三个：
+memory_limit=128M,upload_max_filesize=2M,post_max_size=8M
+修改upload_max_filesize=200 M 这里修改满足你需要的大小就行了。
+可以同时修改其他两项memory_limit=250M post_max_size=200M
+这样就可以MySQL导入200M以下的.sql文件了。
