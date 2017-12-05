@@ -1,0 +1,46 @@
+关于 memcached 是什么以及 memcached 如何使用，这里就不说了，读者可自行参考本站文章：
+memcached是什么？memcache该何使用？
+本篇文章主要介绍如何在 windows 环境下安装与配置 memcached 服务。
+（1）、下载 memcached 程序（适用于 windows 32 版的）
+下载memcached-win32版（http://code.jellycan.com/files/memcached-1.2.6-win32-bin.zip），大家也可以自行去官网下载，memcached 官网的地址是 http://code.jellycan.com/memcached/ ，找到 “win32 binary: memcached-1.2.6-win32-bin.zip” 就可以下载了。
+（2）、安装 memcached
+1、将下载下来的文件解压到 c:/memcached 目录,然后在启动 cmd ，依次输入如下命令：
+C:>c:/memcached/memcached.exe -d install //安装memcached
+C:>c:/memcached/memcached.exe -d start  //启动memcached服务
+C:>telnet 127.0.0.1 11211 //测试连接，11211是memcached服务的默认端口
+2、接着输入 stats（如果跳出如下一些信息就说明 memcached 被成功安装了）
+STAT pid 2484
+STAT uptime 266
+STAT time 1267938148
+STAT version 1.2.1
+STAT pointer_size 32
+STAT curr_items 0
+STAT total_items 0
+STAT bytes 0
+STAT curr_connections 1
+STAT total_connections 2
+STAT connection_structures 2
+STAT cmd_get 0
+STAT cmd_set 0
+STAT get_hits 0
+STAT get_misses 0
+STAT bytes_read 23
+STAT bytes_written 7
+STAT limit_maxbytes 67108864
+END
+注意：如果你的是win 7系统，有可能会提示“'telnet' 不是内部或外部命令，也不是可运行的程序”类似的信息，经排查这是因为 Win7 默认没有安装telnet功能，所以你直接用telnet命令是用不了的，你可以去“控制面板”--》“程序”---》“打开或关闭Windows功能”，勾上“telnet客户端”即可。
+（3）、配置 php 的 memcached 服务
+php_memcache.dll 组件下载地址：http://www.php100.com/html/download/tools/2010/0125/3858.html
+下载 php_memcache.dll 组件，放到 php 安装目录中的 ext 目录中去，然后在 PHP.ini （注意使用phpnow服务器的修改的文件是php-apache2handler.ini）文件中加入：
+extension=php_memcache.dll;
+保存退出，然后重启一下 Apache 服务器，然后可以使用  phpinfo() 函数查看服务里面是否有了 memcached 服务。
+（4）、测试 memcached 服务是否能够正常运行
+<?php
+$mem = new Memcache;
+$mem->connect('127.0.0.1', 11211) or die ("Memcache连接失败");
+echo 'Memcache 当前版本：'.$mem->getVersion().'<br>';//得到Memcache版本信息
+$mem->set('content', 'hello world!');//添加一个Memcache对象
+echo $mem->get('content');//获取一个key值
+$mem->close();
+
+如果以上一切都能够正常运行了，则说明 memcached 已经被成功安装并配置好了。接下来就可以正常使用 memcached 服务了。
