@@ -1,0 +1,12 @@
+MySQL可用操作
+查看该数据库下，该表中是否含有该字段
+select count(*) from information_schema.columns where table_schema='bfb_db_finance_20170627' and table_name='t_cost_info' and column_name='F_seq_date';
+
+查看一个库下某个表的总记录数
+select * from information_schema.tables where TABLE_SCHEMA='bfb_db_finance' and table_name='t_recvables' ;
+
+确认数据表table是否存在
+select TABLE_NAME from INFORMATION_SCHEMA.TABLES where TABLE_SCHEMA='dbname' and TABLE_NAME='tablename' ;
+
+eg:
+select TABLE_NAME from INFORMATION_SCHEMA.TABLES where TABLE_SCHEMA='bfb_db_finance_20170626' and TABLE_NAME='t_cost_info' ;
