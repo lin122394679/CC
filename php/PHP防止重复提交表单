@@ -1,0 +1,44 @@
+我们提交表单的时候，不能忽视的一个限制是防止用户重复提交表单，因为有可能用户连续点击了提交按钮或者是攻击者恶意提交数据，那么我们在提交数据后的处理如修改或添加数据到数据库时就会惹上麻烦。
+
+那么如何规避这中重复提交表单的现象出现呢？我们可以从很多方面入手，首先从前端做限制。前端JavaScript在按钮被点击一次后禁用，即disabled，这个方法简单的防止了多次点击提交按钮，但是缺点是如果用户禁用了javascript脚本则失效。第二，我们可以在提交后做redirect页面重定向，即提交后跳转到新的页面，主要避免F5重复提交，但是也有不足之处。第三，就是数据库做唯一索引约束。第四，就是做session令牌验证。
+
+我们现在来了解下简单的利用session token来防止表单重复提交的方法。
+我们在表单中加一个input隐藏域，即type="hidden"，其value值用来保存token值，当页面刷新的时候这个token值会变化，提交后判断token值是否正确，如果前台提交的token与后台不匹配，则认为是重复提交。
+<?php 
+/* 
+* PHP简单利用token防止表单重复提交 
+*/ 
+session_start(); 
+header("Content-Type: text/html;charset=utf-8"); 
+function set_token() { 
+    $_SESSION['token'] = md5(microtime(true)); 
+} 
+ 
+function valid_token() { 
+    $return = $_REQUEST['token'] === $_SESSION['token'] ? true : false; 
+    set_token(); 
+    return $return; 
+} 
+ 
+//如果token为空则生成一个token 
+if(!isset($_SESSION['token']) || $_SESSION['token']=='') { 
+    set_token(); 
+} 
+ 
+if(isset($_POST['web'])){ 
+    if(!valid_token()){ 
+        echo "token error，请不要重复提交！"; 
+    }else{ 
+        echo '成功提交，Value:'.$_POST['web']; 
+    } 
+}else{ 
+?> 
+    <form method="post" action="">   
+        <input type="hidden" name="token" value="<?php echo $_SESSION['token']?>">   
+        <input type="text" class="input" name="web" value="www.helloweba.com">   
+        <input type="submit" class="btn" value="提交" />   
+    </form> 
+<?php     
+} 
+?> 
+以上是一个简单的防止重复提交表单的例子，仅供参考。那么实际项目开发中，会对表单token做更复杂的处理，即我们说的令牌验证。可能要做的处理有：验证来源域，即来路，是否为外部提交；匹配要执行的动作，是添加、修改or删除；其次最重要的是构建token，token可以采用可逆的加密算法，尽可能复杂，因为明文还是不安全的。令牌验证的具体算法可以参考各大PHP框架，如ThinkPHP提供了很好的令牌验证功能。
