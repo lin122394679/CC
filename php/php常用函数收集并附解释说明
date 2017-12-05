@@ -1,0 +1,497 @@
+作为一个php程序员，掌握并熟记一些常用的php函数是必须的，下面作者就把收集的有关于php的数组方面，php系统方面，php文件处理方面，php字符串处理，php数据库操作，php数学以及数字处理，以及php正则方面的常用常见的函数做一下总结并附简单的说明，没事儿的时候多看看，时间长了，自然烂熟于心，开发起项目来也是得心应手了，同时也希望能帮到所有广大php程序员们。
+（1）php数组处理常用的函数
+array_change_key_case — 返回字符串键名全为小写或大写的数组
+array_chunk — 将一个数组分割成多个
+array_combine — 创建一个数组，用一个数组的值作为其键名，另一个数组的值作为其值
+array_count_values — 统计数组中所有的值出现的次数
+array_diff_assoc — 带索引检查计算数组的差集
+array_diff_key — 使用键名比较计算数组的差集
+array_diff_uassoc — 用用户提供的回调函数做索引检查来计算数组的差集
+array_diff_ukey — 用回调函数对键名比较计算数组的差集
+array_diff — 计算数组的差集
+array_fill_keys — Fill an array with values, specifying keys
+array_fill — 用给定的值填充数组
+array_filter — 用回调函数过滤数组中的单元
+array_flip — 交换数组中的键和值
+array_intersect_assoc — 带索引检查计算数组的交集
+array_intersect_key — 使用键名比较计算数组的交集
+array_intersect_uassoc — 带索引检查计算数组的交集，用回调函数比较索引
+array_intersect_ukey — 用回调函数比较键名来计算数组的交集
+array_intersect — 计算数组的交集
+array_key_exists — 检查给定的键名或索引是否存在于数组中
+array_keys — 返回数组中所有的键名
+array_map — 将回调函数作用到给定数组的单元上
+array_merge_recursive — 递归地合并一个或多个数组
+array_merge — 合并一个或多个数组
+array_multisort — 对多个数组或多维数组进行排序
+array_pad — 用值将数组填补到指定长度
+array_pop — 将数组最后一个单元弹出（出栈）
+array_product — 计算数组中所有值的乘积
+array_push — 将一个或多个单元压入数组的末尾（入栈）
+array_rand — 从数组中随机取出一个或多个单元
+array_reduce — 用回调函数迭代地将数组简化为单一的值
+array_reverse — 返回一个单元顺序相反的数组
+array_search — 在数组中搜索给定的值，如果成功则返回相应的键名
+array_shift — 将数组开头的单元移出数组
+array_slice — 从数组中取出一段
+array_splice — 把数组中的一部分去掉并用其它值取代
+array_sum — 计算数组中所有值的和
+array_udiff_assoc — 带索引检查计算数组的差集，用回调函数比较数据
+array_udiff_uassoc — 带索引检查计算数组的差集，用回调函数比较数据和索引
+array_udiff — 用回调函数比较数据来计算数组的差集
+array_uintersect_assoc — 带索引检查计算数组的交集，用回调函数比较数据
+array_uintersect_uassoc — 带索引检查计算数组的交集，用回调函数比较数据和索引
+array_uintersect — 计算数组的交集，用回调函数比较数据
+array_unique — 移除数组中重复的值
+array_unshift — 在数组开头插入一个或多个单元
+array_values — 返回数组中所有的值
+array_walk_recursive — 对数组中的每个成员递归地应用用户函数
+array_walk — 对数组中的每个成员应用用户函数
+array — 新建一个数组
+arsort — 对数组进行逆向排序并保持索引关系
+asort — 对数组进行排序并保持索引关系
+compact — 建立一个数组，包括变量名和它们的值
+count — 计算数组中的单元数目或对象中的属性个数
+current — 返回数组中的当前单元
+each — 返回数组中当前的键／值对并将数组指针向前移动一步
+end — 将数组的内部指针指向最后一个单元
+extract — 从数组中将变量导入到当前的符号表
+in_array — 检查数组中是否存在某个值
+key — 从关联数组中取得键名
+krsort — 对数组按照键名逆向排序
+ksort — 对数组按照键名排序
+list — 把数组中的值赋给一些变量
+natcasesort — 用“自然排序”算法对数组进行不区分大小写字母的排序
+natsort — 用“自然排序”算法对数组排序
+next — 将数组中的内部指针向前移动一位
+pos — current() 的别名
+prev — 将数组的内部指针倒回一位
+range — 建立一个包含指定范围单元的数组
+reset — 将数组的内部指针指向第一个单元
+rsort — 对数组逆向排序
+shuffle — 将数组打乱
+sizeof — count() 的别名
+sort — 对数组排序
+uasort — 使用用户自定义的比较函数对数组中的值进行排序并保持索引关联
+uksort — 使用用户自定义的比较函数对数组中的键名进行排序
+usort — 使用用户自定义的比较函数对数组中的值进行排序
+（2）php一些不太常用的但非常实用系统级函数
+call_user_method_array — 调用一个用户方法，同时传递参数数组（已废弃）
+call_user_method — 对特定对象调用用户方法（已废弃）
+class_exists — 检查类是否已定义
+get_class_methods — 返回由类的方法名组成的数组
+get_class_vars — 返回由类的默认属性组成的数组
+get_class — 返回对象的类名
+get_declared_classes — 返回由已定义类的名字所组成的数组
+get_declared_interfaces — 返回一个数组包含所有已声明的接口
+get_object_vars — 返回由对象属性组成的关联数组
+get_parent_class — 返回对象或类的父类名
+interface_exists — 检查接口是否已被定义
+is_a — 如果对象属于该类或该类是此对象的父类则返回 TRUE
+is_subclass_of — 如果此对象是该类的子类，则返回 TRUE
+method_exists — 检查类的方法是否存在
+property_exists — 检查对象或类是否具有该属性
+（3）php时间处理常用的函数
+checkdate — 验证一个格里高里日期
+date_default_timezone_get — 取得一个脚本中所有日期时间函数所使用的默认时区
+date_default_timezone_set — 设定用于一个脚本中所有日期时间函数的默认时区
+date_time_set — Sets the time
+date_timezone_get — Return time zone relative to given DateTime
+date_timezone_set — Sets the time zone for the DateTime object
+date — 格式化一个本地时间／日期
+getdate — 取得日期／时间信息
+gettimeofday — 取得当前时间
+gmdate — 格式化一个 GMT/UTC 日期／时间
+gmmktime — 取得 GMT 日期的 UNIX 时间戳
+gmstrftime — 根据区域设置格式化 GMT/UTC 时间／日期
+idate — 将本地时间日期格式化为整数
+localtime — 取得本地时间
+microtime — 返回当前 Unix 时间戳和微秒数
+mktime — 取得一个日期的 Unix 时间戳
+strftime — 根据区域设置格式化本地时间／日期
+strptime — 解析由 strftime() 生成的日期／时间
+strtotime — 将任何英文文本的日期时间描述解析为 Unix 时间戳
+time — 返回当前的 Unix 时间戳
+（4）php文件系统处理常用的函数
+chdir — 改变目录
+chroot — 改变根目录
+dir — directory 类
+closedir — 关闭目录句柄
+getcwd — 取得当前工作目录
+opendir — 打开目录句柄
+readdir — 从目录句柄中读取条目
+rewinddir — 倒回目录句柄
+scandir — 列出指定路径中的文件和目录
+basename — 返回路径中的文件名部分
+chgrp — 改变文件所属的组
+chmod — 改变文件模式
+chown — 改变文件的所有者
+clearstatcache — 清除文件状态缓存
+copy — 拷贝文件
+delete — 参见 unlink() 或 unset()
+dirname — 返回路径中的目录部分
+disk_free_space — 返回目录中的可用空间
+disk_total_space — 返回一个目录的磁盘总大小
+diskfreespace — disk_free_space() 的别名
+fclose — 关闭一个已打开的文件指针
+feof — 测试文件指针是否到了文件结束的位置
+fflush — 将缓冲内容输出到文件
+fgetc — 从文件指针中读取字符
+fgetcsv — 从文件指针中读入一行并解析 CSV 字段
+fgets — 从文件指针中读取一行
+fgetss — 从文件指针中读取一行并过滤掉 HTML 标记
+file_exists — 检查文件或目录是否存在
+file_get_contents — 将整个文件读入一个字符串
+file_put_contents — 将一个字符串写入文件
+file — 把整个文件读入一个数组中
+fileatime — 取得文件的上次访问时间
+filectime — 取得文件的 inode 修改时间
+filegroup — 取得文件的组
+fileinode — 取得文件的 inode
+filemtime — 取得文件修改时间
+fileowner — 取得文件的所有者
+fileperms — 取得文件的权限
+filesize — 取得文件大小
+filetype — 取得文件类型
+flock — 轻便的咨询文件锁定
+fnmatch — 用模式匹配文件名
+fopen — 打开文件或者 URL
+fpassthru — 输出文件指针处的所有剩余数据
+fputcsv — 将行格式化为 CSV 并写入文件指针
+fputs — fwrite() 的别名
+fread — 读取文件（可安全用于二进制文件）
+fscanf — 从文件中格式化输入
+fseek — 在文件指针中定位
+fstat — 通过已打开的文件指针取得文件信息
+ftell — 返回文件指针读/写的位置
+ftruncate — 将文件截断到给定的长度
+fwrite — 写入文件（可安全用于二进制文件）
+glob — 寻找与模式匹配的文件路径
+is_dir — 判断给定文件名是否是一个目录
+is_executable — 判断给定文件名是否可执行
+is_file — 判断给定文件名是否为一个正常的文件
+is_link — 判断给定文件名是否为一个符号连接
+is_readable — 判断给定文件名是否可读
+is_uploaded_file — 判断文件是否是通过 HTTP POST 上传的
+is_writable — 判断给定的文件名是否可写
+is_writeable — is_writable() 的别名
+lchgrp — Changes group ownership of symlink
+lchown — Changes user ownership of symlink
+link — 建立一个硬连接
+linkinfo — 获取一个连接的信息
+lstat — 给出一个文件或符号连接的信息
+mkdir — 新建目录
+move_uploaded_file — 将上传的文件移动到新位置
+parse_ini_file — 解析一个配置文件
+pathinfo — 返回文件路径的信息
+pclose — 关闭进程文件指针
+popen — 打开进程文件指针
+readfile — 输出一个文件
+readlink — 返回符号连接指向的目标
+realpath — 返回规范化的绝对路径名
+rename — 重命名一个文件或目录
+rewind — 倒回文件指针的位置
+rmdir — 删除目录
+set_file_buffer — stream_set_write_buffer() 的别名
+stat — 给出文件的信息
+symlink — 建立符号连接
+tempnam — 建立一个具有唯一文件名的文件
+tmpfile — 建立一个临时文件
+touch — 设定文件的访问和修改时间
+umask — 改变当前的 umask
+unlink — 删除文件
+mail — 发送邮件
+（5）php常用的数学函数以及数字处理函数
+abs — 绝对值
+acos — 反余弦
+acosh — 反双曲余弦
+asin — 反正弦
+asinh — 反双曲正弦
+atan2 — 两个参数的反正切
+atan — 反正切
+atanh — 反双曲正切
+base_convert — 在任意进制之间转换数字
+bindec — 二进制转换为十进制
+ceil — 进一法取整
+cos — 余弦
+cosh — 双曲余弦
+decbin — 十进制转换为二进制
+dechex — 十进制转换为十六进制
+decoct — 十进制转换为八进制
+deg2rad — 将角度转换为弧度
+exp — 计算 e 的指数
+expm1 — 返回 exp(number) – 1，甚至当 number 的值接近零也能计算出准确结果
+floor — 舍去法取整
+fmod — 返回除法的浮点数余数
+getrandmax — 显示随机数最大的可能值
+hexdec — 十六进制转换为十进制
+hypot — 计算一直角三角形的斜边长度
+is_finite — 判断是否为有限值
+is_infinite — 判断是否为无限值
+is_nan — 判断是否为合法数值
+lcg_value — 组合线性同余发生器
+log10 — 以 10 为底的对数
+log1p — 返回 log(1 + number)，甚至当 number 的值接近零也能计算出准确结果
+log — 自然对数
+max — 找出最大值
+min — 找出最小值
+mt_getrandmax — 显示随机数的最大可能值
+mt_rand — 生成更好的随机数
+mt_srand — 播下一个更好的随机数发生器种子
+octdec — 八进制转换为十进制
+pi — 得到圆周率值
+pow — 指数表达式
+rad2deg — 将弧度数转换为相应的角度数
+rand — 产生一个随机整数
+round — 对浮点数进行四舍五入
+sin — 正弦
+sinh — 双曲正弦
+sqrt — 平方根
+srand — 播下随机数发生器种子
+tan — 正切
+tanh — 双曲正切
+（6）php数据库操作常用的函数
+mysql_affected_rows — 取得前一次 MySQL 操作所影响的记录行数
+mysql_change_user — 改变活动连接中登录的用户
+mysql_client_encoding — 返回字符集的名称
+mysql_close — 关闭 MySQL 连接
+mysql_connect — 打开一个到 MySQL 服务器的连接
+mysql_create_db — 新建一个 MySQL 数据库
+mysql_data_seek — 移动内部结果的指针
+mysql_db_name — 取得结果数据
+mysql_db_query — 发送一条 MySQL 查询
+mysql_drop_db — 丢弃（删除）一个 MySQL 数据库
+mysql_errno — 返回上一个 MySQL 操作中的错误信息的数字编码
+mysql_error — 返回上一个 MySQL 操作产生的文本错误信息
+mysql_escape_string — 转义一个字符串用于 mysql_query
+mysql_fetch_array — 从结果集中取得一行作为关联数组，或数字数组，或二者兼有
+mysql_fetch_assoc — 从结果集中取得一行作为关联数组
+mysql_fetch_field — 从结果集中取得列信息并作为对象返回
+mysql_fetch_lengths — 取得结果集中每个输出的长度
+mysql_fetch_object — 从结果集中取得一行作为对象
+mysql_fetch_row — 从结果集中取得一行作为枚举数组
+mysql_field_flags — 从结果中取得和指定字段关联的标志
+mysql_field_len — 返回指定字段的长度
+mysql_field_name — 取得结果中指定字段的字段名
+mysql_field_seek — 将结果集中的指针设定为制定的字段偏移量
+mysql_field_table — 取得指定字段所在的表名
+mysql_field_type — 取得结果集中指定字段的类型
+mysql_free_result — 释放结果内存
+mysql_get_client_info — 取得 MySQL 客户端信息
+mysql_get_host_info — 取得 MySQL 主机信息
+mysql_get_proto_info — 取得 MySQL 协议信息
+mysql_get_server_info — 取得 MySQL 服务器信息
+mysql_info — 取得最近一条查询的信息
+mysql_insert_id — 取得上一步 INSERT 操作产生的 ID
+mysql_list_dbs — 列出 MySQL 服务器中所有的数据库
+mysql_list_fields — 列出 MySQL 结果中的字段
+mysql_list_processes — 列出 MySQL 进程
+mysql_list_tables — 列出 MySQL 数据库中的表
+mysql_num_fields — 取得结果集中字段的数目
+mysql_num_rows — 取得结果集中行的数目
+mysql_pconnect — 打开一个到 MySQL 服务器的持久连接
+mysql_ping — Ping 一个服务器连接，如果没有连接则重新连接
+mysql_query — 发送一条 MySQL 查询
+mysql_real_escape_string — 转义 SQL 语句中使用的字符串中的特殊字符，并考虑到连接的当前字符集
+mysql_result — 取得结果数据
+mysql_select_db — 选择 MySQL 数据库
+mysql_stat — 取得当前系统状态
+mysql_tablename — 取得表名
+mysql_thread_id — 返回当前线程的 ID
+mysql_unbuffered_query — 向 MySQL 发送一条 SQL 查询，并不获取和缓存结果的行
+（7）php处理文件流常用函数
+flush — 刷新输出缓冲
+ob_clean — Clean (erase) the output buffer
+ob_end_clean — Clean (erase) the output buffer and turn off output buffering
+ob_end_flush — Flush (send) the output buffer and turn off output buffering
+ob_flush — Flush (send) the output buffer
+ob_get_clean — Get current buffer contents and delete current output buffer
+ob_get_contents — Return the contents of the output buffer
+ob_get_flush — Flush the output buffer, return it as a string and turn off output buffering
+ob_get_length — Return the length of the output buffer
+ob_get_level — Return the nesting level of the output buffering mechanism
+ob_get_status — Get status of output buffers
+ob_gzhandler — ob_start callback function to gzip output buffer
+ob_implicit_flush — Turn implicit flush on/off
+ob_list_handlers — List all output handlers in use
+ob_start — Turn on output buffering
+output_add_rewrite_var — Add URL rewriter values
+output_reset_rewrite_vars — Reset URL rewriter values
+（8）php正则处理常用函数
+preg_grep — 返回与模式匹配的数组单元
+preg_last_error — Returns the error code of the last PCRE regex execution
+preg_match_all — 进行全局正则表达式匹配
+preg_match — 进行正则表达式匹配
+preg_quote — 转义正则表达式字符
+preg_replace_callback — 用回调函数执行正则表达式的搜索和替换
+preg_replace — 执行正则表达式的搜索和替换
+preg_split — 用正则表达式分割字符串
+ereg_replace — 正则表达式替换
+ereg — 正则表达式匹配
+eregi_replace — 不区分大小写的正则表达式替换
+eregi — 不区分大小写的正则表达式匹配
+split — 用正则表达式将字符串分割到数组中
+spliti — 用正则表达式不区分大小写将字符串分割到数组中
+sql_regcase — 产生用于不区分大小的匹配的正则表达式
+（9）php session处理方面的常用函数
+session_cache_expire — Return current cache expire
+session_cache_limiter — Get and/or set the current cache limiter
+session_commit — session_write_close() 的别名
+session_decode — Decodes session data from a string
+session_destroy — Destroys all data registered to a session
+session_encode — 将当前会话数据编码为一个字符串
+session_get_cookie_params — Get the session cookie parameters
+session_id — Get and/or set the current session id
+session_is_registered — Find out whether a global variable is registered in a session
+session_module_name — Get and/or set the current session module
+session_name — Get and/or set the current session name
+session_regenerate_id — Update the current session id with a newly generated one
+session_register — Register one or more global variables with the current session
+session_save_path — Get and/or set the current session save path
+session_set_cookie_params — Set the session cookie parameters
+session_set_save_handler — Sets user-level session storage functions
+session_start — Initialize session data
+session_unregister — Unregister a global variable from the current session
+session_unset — Free all session variables
+session_write_close — Write session data and end session
+（10）php字符串处理常用的函数
+addcslashes — 以 C 语言风格使用反斜线转义字符串中的字符
+addslashes — 使用反斜线引用字符串
+bin2hex — 将二进制数据转换成十六进制表示
+chop — rtrim() 的别名
+chr — 返回指定的字符
+chunk_split — 将字符串分割成小块
+count_chars — 返回字符串所用字符的信息
+crc32 — 计算一个字符串的 crc32 多项式
+crypt — One-way string encryption (hashing)
+echo — Output one or more strings
+explode — 使用一个字符串分割另一个字符串
+fprintf — Write a formatted string to a stream
+get_html_translation_table — Returns the translation table used by htmlspecialchars() and htmlentities()
+hebrev — Convert logical Hebrew text to visual text
+hebrevc — Convert logical Hebrew text to visual text with newline conversion
+html_entity_decode — Convert all HTML entities to their applicable characters
+htmlentities — Convert all applicable characters to HTML entities
+htmlspecialchars_decode — Convert special HTML entities back to characters
+htmlspecialchars — Convert special characters to HTML entities
+implode — Join array elements with a string
+join — 别名 implode()
+levenshtein — Calculate Levenshtein distance between two strings
+localeconv — Get numeric formatting information
+ltrim — Strip whitespace (or other characters) from the beginning of a string
+md5_file — Calculates the md5 hash of a given file
+md5 — Calculate the md5 hash of a string
+metaphone — Calculate the metaphone key of a string
+money_format — Formats a number as a currency string
+nl_langinfo — Query language and locale information
+nl2br — Inserts HTML line breaks before all newlines in a string
+number_format — Format a number with grouped thousands
+ord — Return ASCII value of character
+parse_str — Parses the string into variables
+print — Output a string
+printf — Output a formatted string
+quoted_printable_decode — Convert a quoted-printable string to an 8 bit string
+quotemeta — Quote meta characters
+rtrim — Strip whitespace (or other characters) from the end of a string
+setlocale — Set locale information
+sha1_file — Calculate the sha1 hash of a file
+sha1 — Calculate the sha1 hash of a string
+similar_text — Calculate the similarity between two strings
+soundex — Calculate the soundex key of a string
+sprintf — Return a formatted string
+sscanf — Parses input from a string according to a format
+str_getcsv — Parse a CSV string into an array
+str_ireplace — Case-insensitive version of str_replace().
+str_pad — Pad a string to a certain length with another string
+str_repeat — Repeat a string
+str_replace — Replace all occurrences of the search string with the replacement string
+str_rot13 — Perform the rot13 transform on a string
+str_shuffle — Randomly shuffles a string
+str_split — Convert a string to an array
+str_word_count — Return information about words used in a string
+strcasecmp — Binary safe case-insensitive string comparison
+strchr — 别名 strstr()
+strcmp — Binary safe string comparison
+strcoll — Locale based string comparison
+strcspn — Find length of initial segment not matching mask
+strip_tags — Strip HTML and PHP tags from a string
+stripcslashes — Un-quote string quoted with addcslashes()
+stripos — Find position of first occurrence of a case-insensitive string
+stripslashes — Un-quote string quoted with addslashes()
+stristr — Case-insensitive strstr()
+strlen — Get string length
+strnatcasecmp — Case insensitive string comparisons using a “natural order” algorithm
+strnatcmp — String comparisons using a “natural order” algorithm
+strncasecmp — Binary safe case-insensitive string comparison of the first n characters
+strncmp — Binary safe string comparison of the first n characters
+strpbrk — Search a string for any of a set of characters
+strpos — Find position of first occurrence of a string
+strrchr — Find the last occurrence of a character in a string
+strrev — Reverse a string
+strripos — Find position of last occurrence of a case-insensitive string in a string
+strrpos — Find position of last occurrence of a char in a string
+strspn — Find length of initial segment matching mask
+strstr — Find first occurrence of a string
+strtok — Tokenize string
+strtolower — Make a string lowercase
+strtoupper — Make a string uppercase
+strtr — Translate certain characters
+substr_compare — Binary safe optionally case insensitive comparison of 2 strings from an offset, up to length characters
+substr_count — Count the number of substring occurrences
+substr_replace — Replace text within a portion of a string
+substr — Return part of a string
+trim — Strip whitespace (or other characters) from the beginning and end of a string
+ucfirst — Make a string’s first character uppercase
+ucwords — Uppercase the first character of each word in a string
+vfprintf — Write a formatted string to a stream
+vprintf — Output a formatted string
+vsprintf — Return a formatted string
+wordwrap — Wraps a string to a given number of characters using a string break character
+（11）php的一些其他常用函数
+base64_decode — 对使用 MIME base64 编码的数据进行解码
+base64_encode — 使用 MIME base64 对数据进行编码
+get_headers — 取得服务器响应一个 HTTP 请求所发送的所有标头
+get_meta_tags — 从一个文件中提取所有的 meta 标签 content 属性，返回一个数组
+http_build_query — 生成 URL-encode 之后的请求字符串
+parse_url — 解析 URL，返回其组成部分
+rawurldecode — 对已编码的 URL 字符串进行解码
+rawurlencode — 按照 RFC 1738 对 URL 进行编码
+urldecode — 解码已编码的 URL 字符串
+urlencode — 编码 URL 字符串
+debug_zval_dump — Dumps a string representation of an internal zend value to output
+doubleval — floatval() 的别名
+empty — 检查一个变量是否为空
+floatval — 获取变量的浮点值
+get_defined_vars — 返回由所有已定义变量所组成的数组
+get_resource_type — 返回资源（resource）类型
+gettype — 获取变量的类型
+import_request_variables — 将 GET／POST／Cookie 变量导入到全局作用域中
+intval — 获取变量的整数值
+is_array — 检测变量是否是数组
+is_binary — Finds whether a variable is a native binary string
+is_bool — 检测变量是否是布尔型
+is_buffer — Finds whether a variable is a native unicode or binary string
+is_callable — 检测参数是否为合法的可调用结构
+is_double — is_float() 的别名
+is_float — 检测变量是否是浮点型
+is_int — 检测变量是否是整数
+is_integer — is_int() 的别名
+is_long — is_int() 的别名
+is_null — 检测变量是否为 NULL
+is_numeric — 检测变量是否为数字或数字字符串
+is_object — 检测变量是否是一个对象
+is_real — is_float() 的别名
+is_resource — 检测变量是否为资源类型
+is_scalar — 检测变量是否是一个标量
+is_string — 检测变量是否是字符串
+is_unicode — Finds whether a variable is a unicode string
+isset — 检测变量是否设置
+print_r — 打印关于变量的易于理解的信息。
+serialize — 产生一个可存储的值的表示
+settype — 设置变量的类型
+strval — 获取变量的字符串值
+unserialize — 从已存储的表示中创建 PHP 的值
+unset — 释放给定的变量
+var_dump — 打印变量的相关信息
+var_export — 输出或返回一个变量的字符串表示
+当然，这里只是简单的介绍了一下各个函数的作用，具体的用法还请参照php说明文档。
