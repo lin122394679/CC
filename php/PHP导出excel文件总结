@@ -1,0 +1,76 @@
+最近因项目需要，需要把系统中的中奖数据导出成Excel格式的文件，百度，谷歌了一番很快就搞定了，觉得以后估计也会用到，于是下面小小的总结了一下，留备后用。
+本次实现PHP导出Excel文件使用的是PHP开源程序PHPExcel，话说这开源的就是好啊，什么东东都写好了，只需拿来调用一下就行了！先外链支持一下PHPExcel的官方网站： http://www.codeplex.com/PHPExcel，大家可以直接去官方下载php导出excel文件所需要用到的类库文件，案例代码相当的多，导出pdf什么的都有，不过在这里主要介绍导出excel的功能，其他的不多说，读者有需要的，可以下下来自行研究，这里总结的导出excel文件是office2007格式，同时兼容2003的。
+下面直接放出本人总结的使用PHP导出Excel的部分调用代码。
+<?php
+error_reporting(E_ALL);
+date_default_timezone_set('Asia/Shanghai');
+require_once './Classes/PHPExcel.php';
+$data=array(
+	0=>array(
+		'id'=>1001,
+		'username'=>'张飞',
+		'password'=>'123456',
+		'address'=>'三国时高老庄250巷101室'
+	),
+	1=>array(
+		'id'=>1002,
+		'username'=>'关羽',
+		'password'=>'123456',
+		'address'=>'三国时花果山'
+	),
+	2=>array(
+		'id'=>1003,
+		'username'=>'曹操',
+		'password'=>'123456',
+		'address'=>'延安西路2055弄3号'
+	),
+	3=>array(
+		'id'=>1004,
+		'username'=>'刘备',
+		'password'=>'654321',
+		'address'=>'愚园路188号3309室'
+	)
+);
+$objPHPExcel=new PHPExcel();
+$objPHPExcel->getProperties()->setCreator('http://www.phpernote.com')
+							 ->setLastModifiedBy('http://www.phpernote.com')
+							 ->setTitle('Office 2007 XLSX Document')
+							 ->setSubject('Office 2007 XLSX Document')
+							 ->setDescription('Document for Office 2007 XLSX, generated using PHP classes.')
+							 ->setKeywords('office 2007 openxml php')
+							 ->setCategory('Result file');
+$objPHPExcel->setActiveSheetIndex(0)
+            ->setCellValue('A1','ID')
+            ->setCellValue('B1','用户名')
+            ->setCellValue('C1','密码')
+            ->setCellValue('D1','地址');
+			
+$i=2;			
+foreach($data as $k=>$v){
+	$objPHPExcel->setActiveSheetIndex(0)
+            ->setCellValue('A'.$i,$v['id'])
+            ->setCellValue('B'.$i,$v['username'])
+            ->setCellValue('C'.$i,$v['password'])
+            ->setCellValue('D'.$i,$v['address']);
+	$i++;
+}
+$objPHPExcel->getActiveSheet()->setTitle('三年级2班');
+$objPHPExcel->setActiveSheetIndex(0);
+$filename=urlencode('学生信息统计表').'_'.date('Y-m-dHis');
+
+//生成xlsx文件
+/*
+header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+header('Content-Disposition: attachment;filename="'.$filename.'.xlsx"');
+header('Cache-Control: max-age=0');
+$objWriter=PHPExcel_IOFactory::createWriter($objPHPExcel,'Excel2007');
+*/
+
+//生成xls文件
+header('Content-Type: application/vnd.ms-excel');
+header('Content-Disposition: attachment;filename="'.$filename.'.xls"');
+header('Cache-Control: max-age=0');
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+
+$objWriter->save('php://output');
+exit;
