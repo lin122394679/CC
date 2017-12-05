@@ -1,0 +1,22 @@
+利用php生成word文档，生成的word文件可以用word，wps等软件打开。具体代码如下：
+function word($data,$fileName=''){
+	if(empty($data)) return '';
+	$data='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'.$data.'</html>';
+	if(empty($fileName)) $fileName=date('YmdHis').'.doc';
+	$fp=fopen($fileName,'wb');
+	fwrite($fp,$data);
+	fclose($fp);
+}
+示例如下：
+<?php
+$str='<title>利用php创建word文档</title>
+ <h1>利用php创建word文档</h1>
+ 作者：phpernote.com
+<hr size=1>
+ <p>如果你打开word.doc，看到了这里的介绍，则说明word文档创建成功了。</p>
+<p>
+<b>版权所有：</b>
+<br>www.phpernote.com
+<hr size=1>';
+word($str);
+
