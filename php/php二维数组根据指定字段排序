@@ -1,0 +1,20 @@
+php二维数组根据指定字段排序的方法总结。
+
+/* 用于根据指定字段排序二维数组，保留原有键值
+ * $array array 输入二维数组
+ * $sortField string 要排序的字段名
+ * $sortBy string 要排序的方式(ASC|DESC)
+ * return array
+ */
+function array_multisort_my($array,$sortField,$sortBy='ASC'){
+	$result=array();
+	foreach($array as $k=>$v){
+		$result[$k]=$v[$sortField];
+	}
+	$sortBy=strtoupper($sortBy);
+	$sortBy=='ASC'?asort($result):($sortBy=='DESC'?arsort($result):'');
+	foreach($result as $k=>$v){
+		$result[$k]=$array[$k];
+	}
+	return $result;
+}
