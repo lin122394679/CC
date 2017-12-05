@@ -1,0 +1,14 @@
+有时候因工作需要我们需要知道MySQL数据库中某个表占用的空间大小，那这个该如何操作呢？其实很简单，你是否留意到了所有数据库都会附带一个似乎从来没有用过的 information_schema 数据库？这个数据库有什么用我们就不说了，但是查看某个表占用的空间大小却是要通过这个数据库来查看的。
+首先打开MySQL的 information_schema 数据库，在这个数据库中找到 TABLES 表，这个表主要字段有：
+ 
+TABLE_SCHEMA : 数据库名
+TABLE_NAME：表名
+ENGINE：所使用的存储引擎
+TABLES_ROWS：记录数
+DATA_LENGTH：数据大小
+INDEX_LENGTH：索引大小
+ 
+当然还有其他一些字段，详情可以查阅 MySQL 的官方手册。
+ 
+那么如果需要知道一个表占用空间的大小，结果就是上表字段中的 数据大小 + 索引大小 就是了。也可以用如下 SQL 语句查询：
+SELECT TABLE_NAME,DATA_LENGTH+INDEX_LENGTH,TABLE_ROWS FROM TABLES WHERE TABLE_SCHEMA='数据库名' AND TABLE_NAME='表名';
