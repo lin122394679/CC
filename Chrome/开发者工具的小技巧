@@ -61,6 +61,3 @@ DevTools有一个功能是模拟CSS的状态，如在元素中的hover和focus�
 15.通过工作区来编辑本地文件
 
 Workspaces是Chrome DevTools的一个强大的的功能，这个功能使得Chrome成为一个真正的IDE。Workspaces使Sources标签下的文件和你本地的工程文件相匹配。所以现在你可以直接编辑和保存，而不用复制粘贴到外部的文本编辑器里。 配置Workspaces，你只需要去Sources标签下，在左边的控制面板的任何地方点击右键，并且选择Add Folder To Worskpace, 或者只是把你的整个工程文件夹拖放到DevTools。现在，无论你打开哪一页，被选择的文件夹的子目录和它包含的所有文件都将能被编辑。 为了使它更加的有用，你可以将页面中用到的文件映射到相应的文件夹，允许在线编辑和简单的保存。
-
-
-
