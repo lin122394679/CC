@@ -1,0 +1,13 @@
+/**
+ * @param $className
+ * @return boolean
+ */
+function loadClass($className){
+   spl_autoload_extensions(CalFeeConf::CLASS_FILE_SUFFIX . ',' . CalFeeConf::EXT_FILE_SUFFIX);
+   set_include_path(FEE_CAL_LIB);
+   spl_autoload($className);
+   if(!class_exists($className, false)){
+      return false;  
+   }
+   return true;
+}
