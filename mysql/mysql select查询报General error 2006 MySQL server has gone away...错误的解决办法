@@ -1,0 +1,24 @@
+最近的一个定时脚本select表的时候频繁报错，具体错误如：...... General error: 2006 MySQL server has gone away. The SQL statement executed was: SELECT * FROM ......，检查了一下发现是由于这是一个循环里面的select查询，而两次select的查询间隔超过了数据库定义的wait_timeout时长，即mysql长连接很久没有新的请求发起，达到了server端的wait_timeout的值后，被server强行关闭，即MySQL链接超时，经过一番测试，得出解决办法如下：
+使用 mysql_ping() 函数 Ping 一个服务器连接，如果存在连接，则返回 true。如果失败，则返回 false。这里如果没有连接则重新连接。
+
+<?php
+class MySQL(){
+	private $link;
+	......
+	function connect(){
+		$this->link=mysql_connect('localhost','root','123456');
+	}
+	......
+	function ping(){
+		if(!mysql_ping($this->link)){
+			mysql_close($this->link);//注意：一定要先执行数据库关闭，这是关键 
+			$this->connect();//连接MySQL，当然这个方法根据自己的情况进行修改
+		}
+	}
+	......
+}
+
+具体查看mysql服务器相关timeout的设置可使用如下查询命令：
+show global variables like '%timeout';
+
+
