@@ -1,0 +1,38 @@
+將工具函数封装到类中
+
+假如你在某文件中定义了很多工具函数:
+
+function utility_a()
+{
+//This function does a utility thing like string processing
+}
+function utility_b()
+{
+//This function does nother utility thing like database processing
+}
+function utility_c()
+{
+//This function is ...
+}
+
+这些函数的使用分散到应用各处. 你可能想將他们封装到某个类中:
+
+class Utility
+{
+public static function utility_a()
+{
+}
+public static function utility_b()
+{
+}
+public static function utility_c()
+{
+}
+}
+//and call them as
+$a = Utility::utility_a();
+$b = Utility::utility_b();
+
+显而易见的好处是, 如果php内建有同名的函数, 这样可以避免冲突.
+
+另一种看法是, 你可以在同个应用中为同个类维护多个版本, 而不导致冲突. 这是封装的基本好处, 无它.
