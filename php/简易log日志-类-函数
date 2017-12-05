@@ -1,0 +1,90 @@
+<?php
+/***************************************************************************
+ * 
+ * Copyright (c) 2017 Baidu.com, Inc. All Rights Reserved
+ * 
+ **************************************************************************/
+ 
+ 
+ 
+/**
+ * @file log.php
+ * @author v_renzhenpeng(com@baidu.com)
+ * @date 2017/11/24 10:28:22
+ * @brief 
+ *  
+ **/
+class GenLogClass {
+    private static $log_dir; 
+    
+    public static function genLogPos($mode = 0777) {
+        self::$log_dir =  dirname(__FILE__).DIRECTORY_SEPARATOR.'log';
+        if (is_dir(self::$log_dir) || @mkdir(self::$log_dir, $mode))
+            chmod(self::$log_dir, 0777);    //给目录操作权限
+            return true;
+    }
+
+    public static function log_debug($message) {
+        if (!self::genLogPos()) {
+            return false;
+        }   
+
+        $log_file = 'DEBUG_'.date('Y-m-d', time()).'.log';
+        $file = self::$log_dir.DIRECTORY_SEPARATOR.$log_file;
+ $message = "[DEBUG] ".date('Y-m-d H:i:s', time())." ".$message;
+        error_log($message.PHP_EOL, 3, $file);
+    }
+
+    public static function log_trace($message) {
+        if (!self::genLogPos()) {
+            return false;
+        }   
+
+        $log_file = 'TRACE_'.date('Y-m-d', time()).'.log';
+        $file = self::$log_dir.DIRECTORY_SEPARATOR.$log_file;
+ $message = "[TRACE] ".date('Y-m-d H:i:s', time())." ".$message;
+        error_log($message.PHP_EOL, 3, $file);
+    }
+
+    public static function log_warning($message) {
+        if (!self::genLogPos()) {
+            return false;
+        }   
+
+        $log_file = 'WARNING_'.date('Y-m-d H:i:s', time()).'.log';
+        $file = self::$log_dir.DIRECTORY_SEPARATOR.$log_file;
+ $message = "[WARNING] ".date('Y-m-d H:i:s', time())." ".$message;
+        error_log($message.PHP_EOL, 3, $file);
+    }
+}
+
+/*
+if (!defined('LOG_DIR')) {
+    define('LOG_DIR', dirname(__FILE__).DIRECTORY_SEPARATOR.'log');
+    chmod(LOG_DIR, 0777);
+}
+*/
+
+defined('LOG_DIR') or define('LOG_DIR',dirname(__FILE__).DIRECTORY_SEPARATOR.'log');
+chmod(LOG_DIR, 0777);
+
+function LOG_DEBUG($message) {
+    $file = LOG_DIR.DIRECTORY_SEPARATOR.'debug_'.date('Y-m-d', time()).'.log';
+    $message = "[DEBUG] ".date('Y-m-d H:i:s', time())." ".$message;
+    error_log($message.PHP_EOL, 3, $file);
+}
+
+
+function LOG_TRACE($message) {
+    $file = LOG_DIR.DIRECTORY_SEPARATOR.'trace_'.date('Y-m-d', time()).'.log';
+    $message = "[TRACE] ".date('Y-m-d H:i:s', time())." ".$message;
+    error_log($message.PHP_EOL, 3, $file);
+}
+
+function LOG_WARNING($message) {
+    $file = LOG_DIR.DIRECTORY_SEPARATOR.'warning_'.date('Y-m-d', time()).'.log';
+    $message = "[WARNING] ".date('Y-m-d H:i:s', time())." ".$message;
+    error_log($message.PHP_EOL, 3, $file);
+}
+/* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */
+?>
