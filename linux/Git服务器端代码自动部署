@@ -1,0 +1,126 @@
+实现原理及相关知识
+
+Git钩子
+
+Git能在特定的重要动作发生前触发自定义脚本，这个触发过程叫做钩子。有两组这样的钩子分别是：
+  ● 服务端
+  ● 客户端
+对于客户端钩子可以在提交合并的时候使用；对于服务端的钩子可以在被推送的时候使用，正如本文要说的一样，当客户端push以写内容时，服务端的Git触发相应的脚本，在脚本中使用Git相关命令进行内容的拉取，实现自动部署功能。
+Git钩子所在目录
+
+Git钩子被存放在hooks的子目录中。即一般在.git/hooks中。当初始化一个Git仓库时，Git会在这个目录中存放一些样例脚本，是以.sample后缀结尾的，要是用的话需要赋予正确的权限并且去掉.sample后缀。这些脚本基本上是以shell脚本，可以使用其他语言编写的脚本。如下面具体的hooks文件夹的目录结构及内容。
+# 客户端hooks文件夹下hooks/|-- applypatch-msg.sample|-- commit-msg.sample|-- post-update.sample|-- pre-applypatch.sample|-- pre-commit.sample|-- pre-push.sample|-- pre-rebase.sample|-- prepare-commit-msg.sample|-- update.sample
+
+#服务端hooks文件夹下hooks/|-- applypatch-msg.sample|-- commit-msg.sample|-- post-update.sample|-- pre-applypatch.sample|-- pre-commit.sample|-- pre-push.sample|-- pre-rebase.sample|-- prepare-commit-msg.sample|-- update.sample
+
+客户端钩子
+
+客户端钩子有多种，可以分为：提交工作流钩子，电子邮件工作流钩子和其他钩子
+pre-commit
+钩子在键入提交信息前运行。可以用于检查代码风格是否一致。
+prepare-commit-msg
+钩子在启动提交信息编辑器之前，默认信息创建之后运行。
+post-commit
+钩子在整个提交过程完成后运行。常用于通知的事情。
+服务端钩子
+
+服务端钩子可以对项目执行各种类型策略。可以再推送到服务器之前运行也可以推送到服务器后在运行。
+pre-receive
+处理来自客户端的推送时触发
+post-receive
+在客户端push完成后运行，可以用来更新其它系统服务或者通知消息；本文通过这post-receive进行代码自动部署
+更多钩子内容可以参考官网书籍
+相关命令
+
+Git操作命令
+在现有目录中初始化仓库：git init
+克隆仓库：git clone [url]
+添加文件到暂存区：git add [name]
+提交文件到仓库：git commit [name] -m [comment]
+从远程仓库中拉取：git pull [remote-name]
+推送到远程仓库：git push [origin] [master]
+创建一个裸仓库（没有工作区）：git init --bare [repname.git]
+需要注意的是：如果使用git clone命令克隆远程仓库，会把远程服务器名设置为origin主分支设置为master
+Linux命令
+修改文件或文件夹所属用户及组：chown -R [groupname]:[username] [filename/dirname]
+给文件添加可执行权限：chmod +x [filename]
+具体操作
+
+本文以web代码为例
+创建服务器端代码托管仓库（远程连接仓库）
+
+第一步：创建git用户：adduser git
+第二步：添加要登录用户的公钥：
+cd /home/gitmkdir .sshtouch authorized_keys#使用vim将公钥添加到authorized_keys文件中,一行一个
+
+公钥文件在~/.ssh文件加下；本文以Windows下的目录为例
+C:\Users\用户名\.ssh
+
+如下图所示
+
+第三步：选定目录作为服务器端代码托管文件夹:
+cd /opt/codegit init --bare blog.git
+
+第四步：添加钩子文件
+cd /opt/code/blog.gittouch post-receive#使用vim打开post-receive将如下shell写入文件中#!/bin/bashIS_BARE=$(git rev-parse --is-bare-repository)if[-z "$IS_BARE"];thenecho >&2"fatal: post-receive: IS_NOT_BARE"exit1fiunset GIT_DIRDeployPath="/var/www/blog"#这里写项目实际部署的目录cd $DeployPathgit fetch --allgit reset --hard origin/master#修改post-receive文件权限chmod +x post-receive
+
+服务器端创建部署项目的文件夹
+
+这个目录是实际运行的线上代码
+cd /var/www/git clone /opt/code/blog.git
+
+克隆后会有一个空仓库的提示
+Git客户端设置（本文是在Windows下使用Git进行操作）
+
+第一步：将远程仓库进行克隆
+git clone git@IP:/opt/code/blog.git
+
+第二步：创建测试文件，上传到远程仓库
+#进入blog目录创建一个测试文件index.htmlgit add .git commit -m 'create new file'git push
+
+第三步：测试是否自动部署
+在浏览器中输入对应的IP地址即可
+
+遇到的问题
+
+错误一
+
+错误详情
+在客户端克隆代码时出现Permission denied, please try again错误
+产生原因
+ssh相关配置文件没有配置
+解决方式
+#将/etc/ssh/sshd_config文件中下面几个选项的注释去掉PubkeyAuthentication yesAuthorizedKeysFile yes%h/.ssh/authorized_keys
+
+在Ubuntu下如果将/etc/passwd中的
+git:x:1000:1000:,,,:/home/git:/bin/bash
+
+修改为
+git:x:1000:1000:,,,:/home/git:/bin/git-shell
+
+后将无法克隆，即会报上述的错误
+有关ssh的文章
+错误二
+
+错误详情
+fatal:'opt/code/blog.git' does not appear to be a git repositoryfatal:Couldnot read from remote repository.
+
+产生原因
+仓库目录地址写错，应该写绝对路径
+解决方式
+修改仓库地址
+$ git clone git@IP:/opt/code/blog.git
+
+本文说明
+
+  ● 本文对于命令大都使用的是绝对路径，若没有则先会以绝对路径先进入对应的目录，在进行操作
+  ● 对于可以部分名称设置可以根据自己的需要进行自定义设置
+  ● 本文实际操作的环境
+      ○ 腾讯云主机
+      ○ Ubuntu 12.04
+      ○ Git版本 1.7.9.5
+参看文章
+
+廖雪峰的Git教程
+Git官方网站文档
+ssh相关文章
