@@ -1,0 +1,31 @@
+在PHP程序中，如何判断一个网页请求是ajax请求还是普通请求？我们在做项目中经常会存在这样一个问题，在浏览器中直接输入我ajax提交的地址后，浏览器就能直接请求数据并将数据打印到页面上。从程序的严谨性上和安全上来说，我觉得这样非常不好。
+但是由于水平有限，这个问题直到今天才被我解决，特此留下文章以供有此需要的人学习。
+首先说说原理：在发送ajax请求的时候，我们可以通过XMLHttpRequest这个对象，创建自定义的header头信息，如果您使用的是原生的ajax方法，也就是未使用jquery或者其他js框架包装的ajax方法，那么代码如下：
+xmlHttpRequest.setRequestHeader("request_type","ajax");
+
+另外通过jquery包装的$.ajax()方法，我们可以轻松地在发送ajax请求之前，创建我们自定义的header头信息，示例如下：
+$.ajax({
+	type:"GET",
+	url:base_url + 'php_check_ajax_request/get_user_list.html',
+	beforeSend:function (XMLHttpRequest) {
+		XMLHttpRequest.setRequestHeader("request_type","ajax");
+	},
+	success:function(data){
+		$("#user_list").html(data);
+		$tip.hide();
+		$button.attr('disabled',true);
+	}
+});
+上面的代码中有一句：
+XMLHttpRequest.setRequestHeader(“request_type”,”ajax”);
+这一句代码就是向header头信息里面创建了一个我们自定义的一个变量“request_type”。这个变量在php中接收变量如下：
+$_SERVER['HTTP_REQUEST_TYPE']
+那么对于本文所提出的的问题，我们就可以按下面这种方式来判断用户发送的请求是哪种方式了。
+<?php
+if (isset($_SERVER['HTTP_REQUEST_TYPE']) && $_SERVER['HTTP_REQUEST_TYPE'] == "ajax"){
+	//ajax提交
+}else{
+	//非ajax提交
+}
+
+需要说明的是 “request_type”这个变量值是我们自定义的，你还可以随意自定义，比如“test”,“is_ajax”等等。
