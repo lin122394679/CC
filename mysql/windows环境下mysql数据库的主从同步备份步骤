@@ -1,0 +1,52 @@
+以下配置在本机上已经成功:
+
+实现功能：A为主服务器，B为从服务器，初始状态时，A和B中的数据信息相同，当A中的数据发生变化时，B也跟着发生相应的变化，使得A和B的数据信息同步，达到备份的目的。
+
+环境：
+A、B的MySQL数据库版本同为4.1.20
+A：
+操作系统：Windows 2003 server
+IP地址：192.168.100.1
+B：
+操作系统：Windows 2003 server
+的IP地址：192.168.100.2
+
+配置过程：
+1、在A的数据库中建立一个备份帐户，命令如下：
+GRANT REPLICATION SLAVE,RELOAD,SUPER ON *.* 
+TO backup@'192.168.100.2'
+IDENTIFIED BY ‘1234’;
+
+建立一个帐户backup，并且只能允许从192.168.100.2这个地址上来登陆，密码是1234。
+
+2、因为mysql版本新密码算法不同，所以进入mysql下，输入：set password for 'backup'@'192.168.100.2'=old_password('1234');
+
+3、关停A服务器，将A中的数据拷贝到B服务器中，使得A和B中的数据同步，并且确保在全部设置操作结束前，禁止在A和B服务器中进行写操作，使得两数据库中的数据一定要相同！
+
+4、对A服务器的配置进行修改，打开mysql/my.ini文件，在[mysqld]下面添加如下内容：
+server-id=1
+log-bin=c:\log-bin.log
+
+server-id：为主服务器A的ID值
+log-bin：二进制变更日值
+
+5、重启A服务器，从现在起，它将把客户堆有关数据库的修改记载到二进制变更日志里去。
+
+6、关停B服务器，对B服务器锦熙配置，以便让它知道自己的镜像ID、到哪里去找主服务器以及如何去连接服务器。最简单的情况是主、从服务器分别运行在不同的主机上并都使用着默认的TCP/IP端口，只要在从服务器启动时去读取的mysql/my.ini文件里添加以下几行指令就行了。
+[mysqld]
+server-id=2
+master-host=192.168.100.1
+master-user=backup
+master-password=1234
+//以下内容为可选 
+replicate-do-db=backup
+
+server-id：从服务器B的ID值。注意不能和主服务器的ID值相同。
+master-host：主服务器的IP地址。
+master-user：从服务器连接主服务器的帐号。
+master-password：从服务器连接主服务器的帐号密码。
+replicate-do-db：告诉主服务器只对指定的数据库进行同步镜像。
+
+7、重启从服务器B。至此所有设置全部完成。更新A中的数据，B中也会立刻进行同步更新。如果从服务器没有进行同步更新，你可以通过查看从服务器中的mysql_error.log日志文件进行排错。
+
+8、由于设置了slave的配置信息，mysql在数据库data目录下生成master.info,所以如有要修改相关slave的配置要先删除该文件，否则修改的配置不能生效。
