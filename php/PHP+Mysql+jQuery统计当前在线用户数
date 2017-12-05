@@ -1,0 +1,108 @@
+通常，当访客访问网站时，页面记录用户的cookie信息，当cookie过期即认为用户不在线。本文中我们使用PHP记录访客IP，并在客户端记录cookie及过期时间，同时通过新浪IP地址接口，获取访客的地理位置（本例只记录省份），一并写入mysql表中，即可统计一段时间内的访客总数，也可以查看访客的地区分布。
+HTML
+我们在页面上放置一个显示当前在线人数的div#total以及一个用于展示访客地区分布的列表#onlinelist，默认我们在列表中放置一张与加载动画图片，后面我们用jQuery控制当鼠标滑向时展示详细列表。
+<div class="demo"> 
+      <div id="total">当前在线：<span id="onlinenum"></span></div> 
+    <ul id="onlinelist"> 
+        <li><img src="loader.gif"></li> 
+    </ul> 
+</div> 
+CSS
+我们用CSS来渲染显示效果，为了就是不让我们的示例很难看，下面的代码中，我们使用了CSS3，时代在进步啊，所以建议使用现代浏览器预览效果。
+.demo{width:150px; margin:20px auto; font-size:14px} 
+#total{padding:6px 10px; background:#090 url(arr.png) no-repeat right top; color:#fff;  
+cursor:pointer; -moz-border-radius:5px; -webkit-border-radius:5px; border-radius:5px;  
+-moz-box-shadow:0 0 3px #ccc; -webkit-box-shadow:0 0 3px #ccc;box-shadow:0 0 3px #ccc;} 
+#onlinelist{background:#f7f7f7; border:1px solid #d3d3d3; display:none; -moz-border-radius:5px;  
+-webkit-border-radius:5px; border-radius:5px; -moz-box-shadow:0 0 3px #ccc;  
+-webkit-box-shadow:0 0 3px #ccc;box-shadow:0 0 3px #ccc;} 
+#onlinelist li{height:20px; line-height:20px;padding:4px 6px;border-bottom:1px dotted #d9d9d9} 
+#onlinelist li span{float:right} 
+#onlinelist li:hover{background:#fff} 
+Mysql
+我们要准备一张数据表online，用来记录访客IP、地区及访问时间。整个示例统计过程都依赖这张表，其结构如下：
+CREATE TABLE IF NOT EXISTS `online` ( 
+  `id` int(11) NOT NULL AUTO_INCREMENT, 
+  `ip` varchar(30) NOT NULL, 
+  `province` varchar(64) NOT NULL, 
+  `addtime` int(10) NOT NULL DEFAULT '0', 
+  PRIMARY KEY (`id`) 
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8; 
+PHP
+online.php用来记录访客信息，包括IP地址和地区。首先检测数据表中是否有访客IP记录，如果有，则只更新访问时间，否则，获取用户省份区域，并将用户IP即省份区域插入到表中。在此，可以判断是否存在访客的cookie记录，如果不存在则向新浪IP地址库请求获取访客的区域信息，并设置cookie值和过期时间。最后，我们删除表中已经过期的记录，统计总记录数并输出，详细请看代码注释。
+include_once('connect.php'); //连接数据库 
+ 
+$ip = get_client_ip(); //获取客户端IP 
+$time = time(); 
+//查询表中是否有ip为当前访客IP的记录 
+$query = mysql_query("select id from online where ip='$ip'"); 
+if(!mysql_num_rows($query)){//如果不存在访客IP 
+    if($_COOKIE['geoData']){//如果存在cookie，则获取用户的区域 
+        $province = $_COOKIE['geoData']; //区域（省份） 
+    }else{ 
+        $api = "http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=$ip"; 
+        $json = file_get_contents($api);//调用新浪IP地址库 
+        $arr = json_decode($json,true);//解析json 
+        $province = $arr['province'];//获取省份 
+        setcookie('geoData',$province,$time+600); //设置cookie，设置过期时间为10分钟 
+    } 
+    //将访客信息插入到数据表中 
+    mysql_query("insert into online (ip,province,addtime) values ('$ip','$province','$time')"); 
+}else{//如果存在，则更新该用户访问时间 
+    mysql_query("update online set addtime='$time' where ip='$ip'"); 
+} 
+//删除已过期的记录 
+$outtime = $time-600; 
+mysql_query("delete from online where addtime<$outtime"); 
+//统计总记录数，即在线用户数 
+list($totalOnline) = mysql_fetch_array(mysql_query("select count(*) from online"));  
+echo $totalOnline;//输出在线总数 
+mysql_close(); 
+关于新浪IP地址库的调用，您也可以参阅helloweba.com文章根据IP定位用户所在城市信息的介绍。
+函数get_client_ip()用来获取用户真实IP。
+function get_client_ip() { 
+    if (getenv("HTTP_CLIENT_IP") && strcasecmp(getenv("HTTP_CLIENT_IP"), "unknown")) 
+        $ip = getenv("HTTP_CLIENT_IP"); 
+    else if (getenv("HTTP_X_FORWARDED_FOR") && strcasecmp(getenv("HTTP_X_FORWARDED_FOR"),  
+"unknown")) 
+        $ip = getenv("HTTP_X_FORWARDED_FOR"); 
+    else if (getenv("REMOTE_ADDR") && strcasecmp(getenv("REMOTE_ADDR"), "unknown")) 
+        $ip = getenv("REMOTE_ADDR"); 
+    else if (isset ($_SERVER['REMOTE_ADDR']) &&  
+$_SERVER['REMOTE_ADDR'] && strcasecmp($_SERVER['REMOTE_ADDR'], "unknown")) 
+        $ip = $_SERVER['REMOTE_ADDR']; 
+    else 
+        $ip = "unknown"; 
+    return ($ip); 
+} 
+geo.php用来统计各省份（区域）访客人数分布。通过查询数据库，并按省份分组排序即可，注意我们将最终的数据集以JSON的形式输出，便于前端ajax交互。
+include_once('connect.php');//连接数据库 
+//查询区域统计 
+$sql = "select province,count(*) as total from online group by province order by total desc"; 
+$result = mysql_query($sql); 
+while($row=mysql_fetch_array($result)){ 
+    $list[] = array( 
+        'province' => $row['province'], 
+        'total' => $row['total'] 
+    );     
+} 
+echo json_encode($list);//以json格式输出 
+jQuery
+前端页面需要做的是，页面加载时展示访客总数，即使用ajax请求online.php即可。然后当鼠标滑向统计箭头时，通过ajax请求geo.php获取各区域省份的在线人数，并以下拉的方式展现效果。
+$(function(){ 
+    $("#onlinenum").load("online.php"); 
+     
+    $(".demo").hover(function(){ 
+        $("#onlinelist").slideDown("fast"); 
+        var str = ''; 
+        $.getJSON("geo.php",function(json){ 
+            $.each(json,function(index,array){ 
+                str = str + "<li><span>"+array['total']+"</span>"+array['province']+"</li>"; 
+            }); 
+            $("#onlinelist").html(str); 
+        }); 
+    },function(){ 
+        $("#onlinelist").slideUp("fast"); 
+    }); 
+}); 
+最后，该示例依赖jquery，所以别忘了在页面中请先加载jquery库，目前已经到jquery-1.9.1版本了。
