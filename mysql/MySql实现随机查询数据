@@ -1,0 +1,1 @@
+select * from `tt_dvjobs` ORDER BY rand() LIMIT 0 , 10;
