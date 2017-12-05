@@ -1,0 +1,27 @@
+Samba服务器架设
+1、防火墙
+service iptables stop
+2、关闭SELINUX
+setenforce 0
+3、安装samba和samba-client
+yum install -y samba samba-client
+4、添加用户
+useradd test
+pdbedit -a test
+5、启动samba服务
+添加开机启动：chkconfig smb on
+立即启动samba：service smb start
+6、测试
+1.在windows电脑中打开我的电脑；
+2.在地址栏中输入\\IP;
+7、自定义共享目录
+1.创建共享目录，并修改权限
+mkdir -p /var/www/html
+chmod -R 777 /var/www/html
+2.修改配置文件：/etc/samba/smb.conf
+添加如下内容：
+[html]    #共享目录名称
+path = /var/www/html 		#共享目录位置
+browseable = yes 			#是否可以浏览
+writable = yes 			#是否可以写入
+pubilc = no 			#是否公开或者公共
