@@ -1,0 +1,8 @@
+更改应用创建的文件权限
+
+在linux环境中, 权限问题可能会浪费你很多时间. 从今往后, 无论何时, 当你创建一些文件后, 确保使用chmod设置正确权限. 否则的话, 可能文件先是由”php”用户创建, 但你用其它的用户登录工作, 系统將会拒绝访问或打开文件, 你不得不奋力获取root权限, 更改文件的权限等等.
+
+// Read and write for owner, read for everybody else
+chmod("/somedir/somefile", 0644);
+// Everything for owner, read and execute for others
+chmod("/somedir/somefile", 0755);
