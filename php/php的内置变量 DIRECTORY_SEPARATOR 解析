@@ -1,0 +1,22 @@
+php的内置变量DIRECTORY_SEPARATOR是一个显示系统分隔符的命令，DIRECTORY_SEPARATOR是php的内部常量，不需要任何定义与包含即可直接使用。
+这个变量是用来解决文件的分隔符，windows上我们习惯性的使用/作为文件分隔符，但是在linux上人家是不认识这个标识的，人家只认识/，于是就要引入下面这个php内置变量了：DIRECTORY_SEPARATOR
+例如：
+define('BLOGGUY.CN_ROOT', dirname(__FILE__)."/upload");
+以上定义在windows系统下调试应该会正常，可是上传到linux服务器的时候你会发现会出错，错误就出现在这个文件分隔符上，因此上面的写法可以改写为以下无错写法：
+define('BLOGGUY.CN_ROOT', dirname(__FILE__).DIRECTORY_SEPARATOR."upload");
+这样就可以确保不会出错了。
+例如discuz里面是这样写的：define('S_ROOT', dirname(__FILE__).DIRECTORY_SEPARATOR);
+回到问题本身上，DIRECTORY_SEPARATOR是一个返回跟操作系统相关的路径分隔符的php内置命令，在windows上返回/，而在linux或者类unix上反悔/，就是这么个区别，通常在定义包含文件路径或者上传保存目录的时候会用到。
+请再看看下面这个例子：
+
+const DIR_SEP = DIRECTORY_SEPARATOR;// 路径分割 win下\ linux下/
+
+private function __construct(){
+	$this->_options = array(
+	'template_dir' => 'templates' . self::DIR_SEP, //模板文件所在目录
+	'cache_dir' => 'templates' . self::DIR_SEP . 'cache' . self::DIR_SEP, //缓存文件存放目录
+	'auto_update' => false, //当模板文件改动时是否重新生成缓存
+	'cache_lifetime' => 0, //缓存生命周期(分钟)，为 0 表示永久
+	'suffix' => '.html', //模板文件后缀
+	);
+}
