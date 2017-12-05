@@ -1,0 +1,48 @@
+crond脚本执行并发冲突问题
+在计划任务中，偶尔会看到重复执行的情况：
+例如我们公司的计划任务举例：
+*/2 * * * * root cd /opt/xxxx/test_S1/html/xxxx/admin; php index.php task testOne >/dev/null 2>&1 */2 * * * * root cd /opt/xxxx/test_S1/html/xxxx/ad使用可跨平台的函数执行命令.notemin; php index.php task testTwo >/dev/null 2>&1
+这是两分钟执行一次的任务，并不能保证每次开启的进程能够在两分钟内绝对的执行完毕关闭，进程一直堆积的话，可能会把系统资源给耗尽，导致系统宕机。
+举例：
+新建test.php文件，代码如下：
+<?php
+sleep(70); ?>
+添加计划任务：
+*/1 * * * * root cd /home/ganjincheng;php test.php
+等待执行，发生堆积
+root 26722 0.0 0.0 9232 1064 ?        Ss 12:05 0:00 /bin/sh -c cd /home/ganjincheng;php test.php
+root 26744 0.0 0.0 112304 8840 ?        S 12:05 0:00 php test.php
+root 29102 0.0 0.0 9232 1060 ?        Ss 12:06 0:00 /bin/sh -c cd /home/ganjincheng;php test.php
+root 29116 0.1 0.0 112304 8840 ?        S 12:06 0:00 php test.php
+root 29906 0.0 0.0 103320 904 pts/3 S+ 12:06 0:00 grep test.php
+解决方案
+第一种，代码中控制并发
+这种方法，就是对代码进行改造。增加是否有进程执行的判断。如下面的代码：
+<?php  
+$lockfile = '/tmp/mytest.lock'; if(file_exists($lockfile)){  
+    exit();  
+}
+file_put_contents($lockfile, date("Y-m-d H:i:s"));
+sleep(70);
+unlink($lockfile); ?>
+这种判断文件是否不存在的方式，会有一个问题。那就是有可能程序未执行到最后，也就是没有删除之前创建的mytest.lock文件。这会导致，之后程序将不能正常执行。
+第二种，数据库控制并发
+可以将第一种方案转移到redis，memache中，进行键值判断。
+如果计划任务是对数据库进行存取，那可以进行锁表操作。偶尔我们也可以利用唯一索引与联合索引的唯一性来避免重复插入情况
+第三种，判断进程是否存在
+举例：
+$fp = popen("ps aux | grep 'test.php' | wc -l", "r");
+$proc_num = fgets($fp); if ($proc_num > 3) { //这里要注意为什么进程数要大于3，实际操作一遍你就明白了 exit;
+}
+sleep(70);
+这种方式有一个弊端，就是ps命令要写的精确。避免把不是执行test.php脚本的进程也统计到。如：
+我们通过vim打开test.php文件。就会导致上面命令误统计。所以当我们不小心vim打开test.php文件的时候，就执行不起来了。
+第四种，使用linux的flock命令
+让linux帮我们去判断啊，flock命令提供了文件锁的功能。命令参数如下：
+[root@www.linuxidc.com]# flock -h
+flock (util-linux-ng 2.17.2)
+Usage: flock [-sxun][-w #] fd#
+       flock [-sxon][-w #] file [-c] command...
+       flock [-sxon][-w #] directory [-c] command... -s  --shared     Get a shared lock -x  --exclusive  Get an exclusive lock -u  --unlock     Remove a lock -n  --nonblock   Fail rather than wait -w  --timeout    Wait for a limited amount of time -o  --close      Close file descriptor before running command -c  --command    Run a single command string through the shell -h  --help       Display this text -V  --version    Display version
+配置举例：
+*/1 * * * * root flock -xn /tmp/mytest.lock -c 'php ./test.php'
