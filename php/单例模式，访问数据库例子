@@ -1,0 +1,25 @@
+class Database {
+	private $_db;
+	static $_instance;
+
+	private function __cosntruct()
+	{
+		$this->_db = pg_connect('dbname=example_db');
+	}
+
+	private function __clone() {}
+
+	public static  function getInstance()
+	{
+		if ( ! (self::$_instance instanceof self) ) {
+			self::$_instance = new self();
+		}
+
+		return self::$_instance;
+	}
+
+	public function query($sql)
+	{
+		return pg_query($this->_db, $sql);
+	}
+}
