@@ -1,0 +1,72 @@
+本篇文章主要是介绍一下PHP中return 和 exit 、break和contiue 区别与用法，希望能够帮助到有需要的朋友！
+作为本篇文章的升级篇，请参考：PHP中跳出多重循环使用break,continue,goto,return,exit的用法和区别
+return、break和contiue是语言结构，就如同if语句之类的，但是exit却是个函数。
+先说一下exit函数的用法。 
+作用： 输出一则消息并且终止当前脚本。 
+如果一段文本中包括多个以 结束的脚本，则exit退出当前所在脚本。 
+比如一篇php文本包括一下代码,则输出为world。
+<% 
+echo "hello"; 
+exit; 
+?> 
+echo "world"; 
+?> 
+语法格式：void表示没有返回值。 
+void exit ([ string $status ] ) 
+void exit ( int $status ) 
+如果status是一段字符串，这个函数在脚本退出前打印status。 
+如果status是一个整数，这个整数会被作为退出状态。退出状态应该从0到254，退出状态255被PHP保留并禁止使用。状态0被用来表示成功的终止程序。 
+return语言结构的用法 
+作用：终止函数的执行和从函数中返回一个值 
+break和continue用在for，foreach，while，do..while 或者 switch 结构中。
+break 结束当前 for，foreach，while，do..while 或者 switch 结构的执行。
+break 可以接受一个可选的数字参数来决定跳出几重循环。
+$arr = array (‘one', ‘two', ‘three', ‘four', ‘stop', ‘five'); 
+while (list (, $val) = each ($arr)) { 
+if ($val == ‘stop') { 
+break; 
+} 
+echo "$val 
+\n"; 
+} 
+
+$i = 0; 
+while (++$i) { 
+switch ($i) { 
+case 5: 
+echo "At 5 
+\n"; 
+break 1; 
+case 10: 
+echo "At 10; quitting 
+\n"; 
+break 2; 
+default: 
+break; 
+} 
+} 
+?> 
+continue 在循环结构用用来跳过本次循环中剩余的代码并开始执行本循环结构的下一次循环。
+注: 注意在 PHP 中 switch 语句被认为是作为 continue 目的的循环结构。
+continue 接受一个可选的数字参数来决定跳过几重循环到循环结尾。
+<?php 
+while (list ($key, $value) = each ($arr)) { 
+if (!($key % 2)) { // skip odd members 
+continue; 
+} 
+do_something_odd ($value); 
+} 
+$i = 0; 
+while ($i++ < 5) { 
+echo "Outer<br>\n"; 
+while (1) { 
+echo " Middle<br>\n"; 
+while (1) { 
+echo " Inner<br>\n"; 
+continue 3; 
+} 
+echo "This never gets output.<br>\n"; 
+} 
+echo "Neither does this.<br>\n"; 
+} 
+?>
