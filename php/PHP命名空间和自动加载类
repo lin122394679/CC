@@ -1,0 +1,205 @@
+背景
+
+最近有个朋友问我 PHP 命名空间是咋样的，但是由于长期不做开发，笔者实际上也已经忘得差不多了，所以也回答不出来。只是记得和 Java 挺像的。事后重新查了一下 PHP 的官方文档，并且和 Java 做对比，Java 的命名空间实际上来自于 JVM 本身的机制，JVM 是基于 class 字节码文件加载类，由于类很容易出现重名的情况，换言之 class 字节码文件也会出现重名情况，所以就需要使用目录来管理不同的字节码文件，而为了保证加载正常，所以就需要命名空间这种机制。当然，也可以说是由于命名空间的存在才有了目录管理的方式。但是 PHP 和 Java 不一样，PHP 是一种动态脚本语言，它的代码分散在所有脚本中，当需要的时候才会使用 include 函数加载对应的文件，所以 PHP 的命名空间，实际上是基于 PHP 的自动加载类，自动加载类实现了才能保证 PHP 命名空间存在的意义。
+
+命名空间概述
+
+命名空间据笔者所知应该最早源于 C++ 语言，在 C++98 标准以后，为了保证各种命名不重合所推出的一种解决方案。现在的面向对象语言基本都有这种机制，当然除了命名空间以外，还有很多种方式，比如模块化，不过实际上这些机制都是用来解决封装问题的，所以笔者个人认为并无好坏之分。
+先把 PHP 官方文档代码拉出来溜溜
+
+<?php
+namespace my\name; // 参考 "定义命名空间" 小节
+
+class MyClass {}
+function myfunction() {}
+const MYCONST = 1;
+
+$a = new MyClass;
+$c = new \my\name\MyClass; // 参考 "全局空间" 小节
+
+$a = strlen('hi'); // 参考 "使用命名空间：后备全局函数/常量" 小节
+
+$d = namespace\MYCONST; // 参考 "namespace操作符和__NAMESPACE__常量” 小节
+
+$d = __NAMESPACE__ . '\MYCONST';
+echo constant($d); // 参考 "命名空间和动态语言特征" 小节
+?>
+
+非常容易理解的代码，从上面的代码中可以看到 PHP 定义的命名空间是怎么样的，不过笔者个人认为其定义非常反人类，居然使用反斜杠来分隔命名空间路径。不过有一点需要注意，名为 PHP 或 php 的命名空间，以及以这些名字开头的命名空间（例如PHP\Classes）被保留用作语言内核使用，而不应该在用户空间的代码中使用。
+
+定义命名空间
+
+PHP 命名空间功能只能在 PHP5.3.0 以上版本使用，对于一个命名空间，只有类、接口、函数和常量会被包含在命名空间中。
+
+<?php
+namespace MyProject;
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+
+?>
+
+当然，也可以使用花括号来包含所有需要的内容，就像这样。
+
+<?php
+declare(encoding='UTF-8');
+namespace MyProject {
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+}
+
+namespace { // 全局代码
+session_start();
+$a = MyProject\connect();
+echo MyProject\Connection::start();
+}
+?>
+
+不过这样很容易造成缩进上的问题，所以笔者不推荐使用，并且一般情况下，一个文件包含一个类，所以也不需要花括号来分割命名空间范围。
+
+使用命名空间
+
+对于命名空间路径来说，存在着三种形式
+
+  1. 非限定名称，或者说不包含前缀的类名称。例如 $a=new foo(); 或 foo::staticmethod();。如果当前命名空间是 currentnamespace，foo 将被解析为 currentnamespace\foo。如果使用 foo 的代码是全局的，不包含在任何命名空间中的代码，则 foo 会被解析为foo`。
+  2. 限定名称,或包含前缀的名称，例如 $a = new subnamespace\foo(); 或 subnamespace\foo::staticmethod();。如果当前的命名空间是 currentnamespace，则 foo 会被解析为 currentnamespace\subnamespace\foo。如果使用 foo 的代码是全局的，不包含在任何命名空间中的代码，foo 会被解析为 subnamespace\foo。
+  3. 完全限定名称，或包含了全局前缀操作符的名称，例如， $a = new \currentnamespace\foo(); 或 \currentnamespace\foo::staticmethod();。在这种情况下，foo 总是被解析为代码中的文字名 (literal name)currentnamespace\foo。
+
+由于 PHP 本身动态语言的特性，所以完全可以使用字符串动态访问命名空间内的元素。
+
+<?php
+namespace namespacename;
+class classname
+{
+    function __construct()
+    {
+        echo __METHOD__,"\n";
+    }
+}
+function funcname()
+{
+    echo __FUNCTION__,"\n";
+}
+const constname = "namespaced";
+
+include 'example1.php';
+
+$a = 'classname';
+$obj = new $a; // prints classname::__construct
+$b = 'funcname';
+$b(); // prints funcname
+echo constant('constname'), "\n"; // prints global
+
+/* note that if using double quotes, "\\namespacename\\classname" must be used */
+$a = '\namespacename\classname';
+$obj = new $a; // prints namespacename\classname::__construct
+$a = 'namespacename\classname';
+$obj = new $a; // also prints namespacename\classname::__construct
+$b = 'namespacename\funcname';
+$b(); // prints namespacename\funcname
+$b = '\namespacename\funcname';
+$b(); // also prints namespacename\funcname
+echo constant('\namespacename\constname'), "\n"; // prints namespaced
+echo constant('namespacename\constname'), "\n"; // also prints namespaced
+?>
+
+不过有一点需要注意，就是单双引号之间的区别，单引号可以不需要处理 \ 的转译处理，而双引号就必须使用 \\ 等转译符号。
+Java 语言使用 import 机制引入命名空间，由于 Java 可以指定到类名，所以 Java 最多只能导入到具体类，而 PHP 则可以指定到一个命名空间内的类、常量、方法等，并且支持命名空间别名。
+
+<?php
+namespace foo;
+use My\Full\Classname as Another;
+
+// 下面的例子与 use My\Full\NSname as NSname 相同
+use My\Full\NSname;
+
+// 导入一个全局类
+use ArrayObject;
+
+// importing a function (PHP 5.6+)
+use function My\Full\functionName;
+
+// aliasing a function (PHP 5.6+)
+use function My\Full\functionName as func;
+
+// importing a constant (PHP 5.6+)
+use const My\Full\CONSTANT;
+
+$obj = new namespace\Another; // 实例化 foo\Another 对象
+$obj = new Another; // 实例化 My\Full\Classname　对象
+NSname\subns\func(); // 调用函数 My\Full\NSname\subns\func
+$a = new ArrayObject(array(1)); // 实例化 ArrayObject 对象
+// 如果不使用 "use \ArrayObject" ，则实例化一个 foo\ArrayObject 对象
+func(); // calls function My\Full\functionName
+echo CONSTANT; // echoes the value of My\Full\CONSTANT
+?>
+
+名称解析规则
+
+首先就是前面讲过的三种名称类型，名称解析遵循以下规则：
+
+  1. 对完全限定名称的函数，类和常量的调用在编译时解析。例如 new \A\B 解析为类 A\B。
+  2. 所有的非限定名称和限定名称（非完全限定名称）根据当前的导入规则在编译时进行转换。例如，如果命名空间 A\B\C 被导入为 C，那么对 C\D\e() 的调用就会被转换为 A\B\C\D\e()。
+  3. 在命名空间内部，所有的没有根据导入规则转换的限定名称均会在其前面加上当前的命名空间名称。例如，在命名空间 A\B 内部调用 C\D\e()，则 C\D\e() 会被转换为 A\B\C\D\e() 。
+  4. 非限定类名根据当前的导入规则在编译时转换（用全名代替短的导入名称）。例如，如果命名空间 A\B\C 导入为C，则 new C() 被转换为 new A\B\C() 。
+  5. 在命名空间内部（例如A\B），对非限定名称的函数调用是在运行时解析的。例如对函数 foo() 的调用是这样解析的：
+      ○ 在当前命名空间中查找名为 A\B\foo() 的函数
+      ○ 尝试查找并调用 全局(global) 空间中的函数 foo()。
+  6. 在命名空间（例如A\B）内部对非限定名称或限定名称类（非完全限定名称）的调用是在运行时解析的。下面是调用 new C() 及 new D\E() 的解析过程：
+      ○ new C()的解析:
+          ■ 在当前命名空间中查找A\B\C类。
+          ■ 尝试自动装载类A\B\C。
+      ○ new D\E()的解析:
+          ■ 在类名称前面加上当前命名空间名称变成：A\B\D\E，然后查找该类。
+          ■ 尝试自动装载类 A\B\D\E。
+      ○ 为了引用全局命名空间中的全局类，必须使用完全限定名称 new \C()。
+
+
+从上面的规则来看，实际上 PHP 的导入规则和 Java 有点类似，但是却有不一样，主要是因为 Java 是完全面向对象的，而 PHP 本质上还只是一种基于对象的语言。
+
+自动加载类
+
+在早期 PHP 开发中，开发者最烦的就是一堆 include 函数包含了一大堆文件，而且早期时候 PHP 面向对象的概念确实太差了，因为 PHP 作为一种脚本语言，不存在程序入口，所以脚本顺序化执行的诱惑力实在是很大，即使面向对象开发，但是缺少极佳的模块划分导入机制，代码可以说很难有美感，最大的代表就是 Wordpress。如果有朋友看过这个典型项目，可以觉得非常痛苦，因为各种初始化、业务流程都分散在各个不同的文件中，使用 include 函数进行衔接，然后每次页面渲染都是同样的要走一趟流程。当然，这是 Wordpress 的历史包袱，而在支持老版本 PHP 的情况下 Wordpress 代码已经写得足够优化了。
+
+在 PHP5 中就不需要这么麻烦了，因为可以定义一个 __autoload() 函数，当调用一个未定义的类的时候就会启动此函数，从而在抛出错误之前做最后的补救，不过这个函数的本意已经被完全曲解使用了，现在都用来做自动加载。
+注意，这个函数实际上已经不被推荐使用了，相反，现在应当使用 spl_autoload_register() 来注册类的自动加载函数。
+
+bool spl_autoload_register ([ callable $autoload_function [, bool $throw = true [, bool $prepend = false ]]] )
+
+autoload_function 是需要注册的自动装载函数，如果此项为空，则会注册 spl_autoload 函数，
+throw 此参数设置了 autoload_function 无法成功注册时， spl_autoload_register() 是否抛出异常。
+prepend 如果是 true，spl_autoload_register() 会添加函数到队列之首，而不是队列尾部。
+上面提到了 spl_autoload 函数，实际上注册函数的规范就应当遵循此函数，函数声明如下：
+
+void spl_autoload ( string $class_name [, string $file_extensions ] )
+
+由于这个函数默认实现是通过 C 语言，所以这里给出一个 PHP 语言的实现规范。
+
+<?php
+
+    // Your custom class dir
+    define('CLASS_DIR', 'class/')
+
+    // Add your class dir to include path
+    set_include_path(get_include_path().PATH_SEPARATOR.CLASS_DIR);
+
+    // You can use this trick to make autoloader look for commonly used "My.class.php" type filenames
+    spl_autoload_extensions('.class.php');
+
+    // Use default autoload implementation
+    spl_autoload_register();
+?>
+
+大致上就和这个是类似的。实际上命名空间和自动加载类的结合就基本是通过路径形式
+
+function __autoload(){
+    $dir = './libralies';
+    set_include_path(get_include_path(). PATH_SEPARATOR. $dir);
+    $class = str_replace('\\', '/', $class) . '.php'; 
+    require_once($class);
+}
+
+将命名空间路径替换为实际路径。
