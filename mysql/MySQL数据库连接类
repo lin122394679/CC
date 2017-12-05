@@ -1,0 +1,323 @@
+本人整理的一个非常不错的mysql数据库连接类，代码简单易懂，修改扩展都很方便。
+该类的初始出处为php100，经过后来本人改良加入了各种注释和防止克隆和单例模式的代码，第一版修改后的代码可参考本站这篇文章：
+php mysql数据库操作类
+经过长时间的使用发现实际过程中比较麻烦，比如查询，修改，删除操作都必须写原始的SQL语句，这样就严重的影响了开发的速度。于是决定模仿其他CMS里面的数据库类的一些方法加了一些比较简单的数据库操作方法，下面先看看修改后的源码，末尾会有一些使用示例。
+具体代码如下：
+<?php
+/**
+ * MySQL 数据库连接(操作)类
+ * @author www.phpernote.com
+ * @version 1.0 20141214112911
+ */
+class MySQL{		                
+	private $conn;						    //数据库链接资源
+	private $result;					    //结果集
+	private $msg;						    //返回结果
+	private $fields;						//返回字段
+	private $fieldsNum;					    //返回字段数
+	private $rowsNum;					    //返回结果数
+	private $rowsRst;					    //返回单条记录的字段数组
+	private $filesArray=array();			//返回字段数组
+	private $rowsArray=array();				//返回结果数组
+	private $query_count=0;                 //查询结果次数
+	static private $_instance=array();		//存储对象
+	private $sql='';						//执行的SQL语句
+	private $config=array(					//这里使用数组形式参数是为了方便在一个项目中可即时连接多个数据库
+		'host'=>'',							//服务器地址
+		'user'=>'',							//登录账号
+		'pass'=>'',							//登录密码
+		'data'=>'',							//数据库名称
+		'char'=>'',							//设置操作的字符集
+		'pref'=>'phpernote',				//数据表前缀
+		'dbug'=>'',							//是否打开调试
+	);
+	//设置类属性
+	public function __set($name,$value){
+		$this->$name=$value;
+	}
+	//获取类属性
+	public function __get($name){
+		return $this->$name;
+	}
+	//防止被克隆
+	private function __clone(){}
+	//单例模式类
+	public static function getInstance($config){
+		(!isset($config['host'])||empty($config['host']))&&die('empty Host');
+		(!isset($config['user'])||empty($config['user']))&&die('empty User');
+		(!isset($config['pass'])||empty($config['pass']))&&die('empty Pass');
+		(!isset($config['data'])||empty($config['data']))&&die('empty Data');
+		!isset($config['char'])?$config['char']='utf8':$config['char'];
+		!isset($config['pref'])?$config['pref']='':$config['pref'];
+		!isset($config['dbug'])?$config['dbug']=0:$config['dbug'];
+		$key=md5($config['host'].$config['user'].$config['pass'].$config['data'].$config['char'].$config['pref']);
+		if(!isset(self::$_instance[$key])||empty(self::$_instance[$key])){
+			self::$_instance[$key]=new self($config);
+		}
+		return self::$_instance[$key];
+	}
+	//初始化类
+	private function __construct($config){
+		$this->config['host']=$config['host'];
+		$this->config['user']=$config['user'];
+		$this->config['pass']=$config['pass'];
+		$this->config['data']=$config['data'];
+		$this->config['char']=$config['char'];
+		$this->config['pref']=$config['pref'];
+		$this->config['dbug']=$config['dbug'];
+		$this->init_conn();
+	}
+	//链接数据库
+	function init_conn(){
+		$key=md5($this->config['host'].$this->config['user'].$this->config['pass'].$this->config['data'].$this->config['char'].$this->config['pref']);
+		$this->conn=@mysql_connect($this->config['host'],$this->config['user'],$this->config['pass'],$key) or die('connect db fail ！');
+		@mysql_select_db($this->config['data'],$this->conn) or die('select db fail !');
+		mysql_query("set names ".$this->config['char']);
+	}
+	//查询结果
+	function mysql_query_rst($sql){
+		$this->sql=$sql;
+		if(!isset($this->conn)||empty($this->conn)) $this->init_conn();
+		$this->result=@mysql_query($this->sql,$this->conn);
+		$this->msg_error();
+		if($this->config['dbug']){
+			static $i=1;
+			echo $i,':',$this->sql,' -- ',$this->msg,'<br />';
+			$i++;
+		}
+		$this->query_count++;
+	}
+	//取得字段数 
+	function getFieldsNum($sql){
+		$this->mysql_query_rst($sql);
+		$this->fieldsNum=@mysql_num_fields($this->result);
+	}
+	//取得查询结果数
+	function getRowsNum($sql){
+		$this->mysql_query_rst($sql);
+		if(mysql_errno()==0){
+			return @mysql_num_rows($this->result);
+		}else{
+			return '';
+		}
+	}
+	//扩展查询结果数
+	function counts($table,$where){
+		$rows=$this->getOne($table,'COUNT(*) AS `num`',$where,'','',MYSQL_NUM);
+		return isset($rows[0])&&is_numeric($rows[0])?$rows[0]:0;
+	}
+	//取得记录数组（单条记录）
+	function getRowsRst($sql,$type=MYSQL_BOTH){
+		$this->mysql_query_rst($sql);
+		if(empty($this->result)) return '';
+		if(mysql_error()==0){
+			$this->rowsRst=mysql_fetch_array($this->result,$type);
+			return $this->rowsRst;
+		}else{
+			return '';
+		}
+	}
+	//扩展查询（单条记录）
+	function getOne($table,$field,$where='',$order='',$group='',$type=MYSQL_ASSOC){
+		$where=$this->whereArrayToStr($where);
+		$field=empty($field)?'*':$field;
+		$where=$where==''?'':' WHERE '.$where;
+		$order=$order==''?'':' ORDER BY '.$order;
+		$group=$group==''?'':' GROUP BY '.$group;
+		$sql='SELECT '.$field.' FROM `'.$this->config['pref'].$table.'`'.$where.$group.$order.' LIMIT 1';
+		return $this->getRowsRst($sql,$type);
+	}
+	//取得记录数组（多条记录）
+	function getRowsArray($sql,$type=MYSQL_BOTH,$key=''){
+        !empty($this->rowsArray)?$this->rowsArray=array():'';
+		$this->mysql_query_rst($sql);
+		if(mysql_errno()==0){
+			while($row=mysql_fetch_array($this->result,$type)){
+				if($key){
+					$this->rowsArray[$row[$key]]=$row;
+				}else{
+					$this->rowsArray[]=$row;
+				}
+			}
+			return $this->rowsArray;
+		}else{
+			return '';
+		}
+	}
+	//扩展查询（多条记录）
+	function select($table,$field='',$where='',$limit='',$order='',$group='',$type='',$key=''){
+		$where=$this->whereArrayToStr($where);
+		$field=empty($field)?'*':$field;
+		$where=$where==''?'':' WHERE '.$where;
+		$limit=$limit==''?'':' LIMIT '.$limit;
+		$order=$order==''?'':' ORDER BY '.$order;
+		$group=$group==''?'':' GROUP BY '.$group;
+		$type=!in_array($type,array(MYSQL_ASSOC,MYSQL_BOTH,MYSQL_NUM))?MYSQL_ASSOC:$type;
+		$sql='SELECT '.$field.' FROM `'.$this->config['pref'].$table.'`'.$where.$group.$order.$limit;
+		return $this->getRowsArray($sql,$type,$key);
+	}
+	//更新、删除、添加记录数
+	function uidRst($sql,$return_insert_id=false){
+		if(!isset($this->conn)||empty($this->conn)) $this->init_conn();
+		$this->mysql_query_rst($sql);
+		if(!mysql_errno()){
+			return $return_insert_id?mysql_insert_id():@mysql_affected_rows();
+		}else{
+			return '';
+		}
+	}
+	//扩展插入
+	function insert($table,$data,$return_insert_id=false,$replace=false){
+		if(!is_array($data)||$table==''||!count($data)){
+			return false;
+		}
+		$field=array_keys($data);
+		foreach($field as $k=>$v){
+			$field[$k]='`'.$v.'`';
+		}
+		$data=array_values($data);
+		foreach($data as $k=>$v){
+			$data[$k]='\''.$v.'\'';
+		}
+		$field=implode(',',$field);
+		$value=implode(',',$data);
+		$sql=$replace?'REPLACE INTO':'INSERT INTO';
+		$sql.=' `'.$this->config['pref'].$table.'`('.$field.') VALUES('.$value.')';
+		return $this->uidRst($sql,$return_insert_id);
+	}
+	//扩展更新
+	function update($table,$data,$where=''){
+		if(empty($table)) return false;
+		$where=$this->whereArrayToStr($where);
+		$where=!empty($where)?' WHERE '.$where:'';
+		$field='';
+		if(is_string($data)&&$data!=''){
+			$field=$data;
+		}elseif(is_array($data)&&count($data)){
+			$fields=array();
+			foreach($data as $k=>$v){
+				switch(substr($v,0,2)){
+					case '+=':
+						$v=substr($v,2);
+						if(is_numeric($v)){
+							$fields[]='`'.$k.'`'.'='.'`'.$k.'`'.'+'.'\''.$v.'\'';
+						}else{
+							continue;
+						}
+					break;
+					case '-=':
+						$v=substr($v,2);
+						if(is_numeric($v)){
+							$fields[]='`'.$k.'`'.'='.'`'.$k.'`'.'-'.'\''.$v.'\'';
+						}else{
+							continue;
+						}
+					break;
+					default:
+						$fields[]='`'.$k.'`'.'='.'\''.$v.'\'';
+				}
+			}
+			$field=implode(',',$fields);
+		}else{
+			return false;
+		}
+		$sql='UPDATE `'.$this->config['pref'].$table.'` SET '.$field.$where;
+		return $this->uidRst($sql,false);
+	}
+	//扩展删除
+	function delete($table,$where){
+		if($table==''||$where==''){
+			return false;
+		}
+		$where=$this->whereArrayToStr($where);
+		$where=' WHERE '.$where;
+		$sql='DELETE FROM `'.$this->config['pref'].$table.'`'.$where;
+		return $this->uidRst($sql,false);
+	}
+	//获取对应的字段值
+	function getFields($sql,$fields){
+		$this->mysql_query_rst($sql);
+		if(!mysql_errno()){
+			if(mysql_num_rows($this->result)>0){
+				$tmpfld=@mysql_fetch_row($this->result);
+				$this->fields=$tmpfld[$fields];
+				
+			}
+			return $this->fields;
+		}else{
+			return '';
+		}
+	}
+	//清空数据表信息
+	function truncate($table){
+		if(empty($table)) return '';
+		$this->mysql_query_rst('TRUNCATE TABLE `'.$this->config['pref'].$table.'`');
+		$this->msg_error();
+	}
+	//错误信息
+	function msg_error(){
+		if(mysql_errno()!=0){
+			$this->msg=mysql_error();
+		}
+		return $this->msg;
+	}
+	//释放结果集
+	function close_rst(){
+		mysql_free_result($this->result);
+		$this->msg='';
+		$this->fieldsNum=0;
+		$this->rowsNum=0;
+		$this->filesArray='';
+		$this->rowsArray='';
+	}
+	//关闭数据库
+	final function close_conn(){
+		$this->close_rst();
+		mysql_close($this->conn);
+		$this->conn='';
+	}
+	//取得数据库版本
+	final function db_version(){
+		return mysql_get_server_info();
+	}
+	//设置断点以打印SQL语句
+	function sql($exit=false){
+		$this->config['dbug']=true;
+		if($exit) exit;
+	}
+	//打印最后一条SQL语句(php程序员的笔记)
+	function lastSql(){
+		echo $this->sql;
+	}
+	//将where数组转换为SQL语句
+	final function whereArrayToStr($where,$and=' AND '){
+		if(is_array($where)&&!empty($where)){
+			$sql='';
+			foreach($where as $k=>$v){
+				if(false!==strpos($k,'?')){
+					$sql.=$sql?$and." ".str_replace('?','\''.$v.'\'',$k):" ".str_replace('?','\''.$v.'\'',$k);
+				}else{
+					$sql.=$sql?$and." `".$k."`='".$v."' ":" `".$k."`='".$v."'";
+				}
+			}
+			return $sql;
+		}else{
+			return $where;
+		}
+	}
+}
+?>
+
+该类的实例化过程很简单，如下：
+$db=MySQL::getInstance(
+	array(
+		'host'=>'localhost',
+		'user'=>'root',
+		'pass'=>'root',
+		'data'=>'test',
+		'pref'=>'www.phpernote.com',
+	''=>0)
+);
+
+include_once('mysql.class.php');
+$db = MySQL::getInstance($db_host,$db_user,$db_pass,$db_data);
