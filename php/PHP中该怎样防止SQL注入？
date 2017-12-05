@@ -1,0 +1,56 @@
+问题描述：
+
+如果用户输入的数据在未经处理的情况下插入到一条SQL查询语句，那么应用将很可能遭受到SQL注入攻击，正如下面的例子：
+
+$unsafe_variable = $_POST['user_input'];
+mysql_query("INSERT INTO `table` (`column`) VALUES ('" . $unsafe_variable . "')");
+
+因为用户的输入可能是这样的：
+
+value'); DROP TABLE table;--
+
+那么SQL查询将变成如下：
+
+INSERT INTO `table` (`column`) VALUES('value'); DROP TABLE table;
+--')
+
+应该采取哪些有效的方法来防止SQL注入？
+
+最佳回答（来自Theo）：
+
+使用预处理语句和参数化查询。预处理语句和参数分别发送到数据库服务器进行解析，参数将会被当作普通字符处理。这种方式使得攻击者无法注入恶意的SQL。 你有两种选择来实现该方法：
+
+1、使用PDO：
+
+$stmt = $pdo->prepare('SELECT * FROM employees WHERE name = :name');
+$stmt->execute(array('name' => $name));
+foreach ($stmt as $row) {
+// do something with $row
+}
+
+2、使用mysqli：
+
+$stmt = $dbConnection->prepare('SELECT * FROM employees WHERE name = ?');
+$stmt->bind_param('s', $name);
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+// do something with $row
+}
+
+PDO
+
+注意，在默认情况使用PDO并没有让MySQL数据库执行真正的预处理语句（原因见下文）。为了解决这个问题，你应该禁止PDO模拟预处理语句。一个正确使用PDO创建数据库连接的例子如下：
+
+$dbConnection = new PDO('mysql:dbname=dbtest;host=127.0.0.1;charset=utf8', 'user', 'pass');
+$dbConnection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+$dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+在上面的例子中，报错模式(ATTR_ERRMODE)并不是必须的，但建议加上它。这样，当发生致命错误(Fatal Error)时，脚本就不会停止运行，而是给了程序员一个捕获PDOExceptions的机会，以便对错误进行妥善处理。 然而，第一个setAttribute()调用是必须的，它禁止PDO模拟预处理语句，而使用真正的预处理语句，即有MySQL执行预处理语句。这能确保语句和参数在发送给MySQL之前没有被PHP处理过，这将使得攻击者无法注入恶意SQL。了解原因，可参考这篇博文：PDO防注入原理分析以及使用PDO的注意事项。 注意在老版本的PHP(<5.3.6)，你无法通过在PDO的构造器的DSN上设置字符集，参考：silently ignored the charset parameter。
+
+解析
+
+当你将SQL语句发送给数据库服务器进行预处理和解析时发生了什么？通过指定占位符（一个?或者一个上面例子中命名的 :name），告诉数据库引擎你想在哪里进行过滤。当你调用execute的时候，预处理语句将会与你指定的参数值结合。 关键点就在这里：参数的值是和经过解析的SQL语句结合到一起，而不是SQL字符串。SQL注入是通过触发脚本在构造SQL语句时包含恶意的字符串。所以，通过将SQL语句和参数分开，你防止了SQL注入的风险。任何你发送的参数的值都将被当作普通字符串，而不会被数据库服务器解析。回到上面的例子，如果$name变量的值为 ’Sarah’; DELETE FROM employees ，那么实际的查询将是在 employees 中查找 name 字段值为 ’Sarah’; DELETE FROM employees 的记录。 另一个使用预处理语句的好处是：如果你在同一次数据库连接会话中执行同样的语句许多次，它将只被解析一次，这可以提升一点执行速度。 如果你想问插入该如何做，请看下面这个例子（使用PDO）：
+
+$preparedStatement = $db->prepare('INSERT INTO table (column) VALUES (:column)');
+$preparedStatement->execute(array('column' => $unsafeValue));
