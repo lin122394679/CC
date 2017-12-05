@@ -1,0 +1,40 @@
+FTP服务器架设
+
+1、关闭防火墙
+service iptables stop
+2、关闭SELINUX
+setenforce 0
+3、安装所需依赖及编译工具
+yum install -y gcc openssl-devel perl
+4、下载pure-ftpd
+curl -O https://download.pureftpd.org/pub/pure-ftpd/releases/pure-ftpd-1.0.41.tar.gz
+5、解压
+tar -zxvf pure-ftpd-1.0.41.tar.gz
+6、进行配置 
+./configure --prefix=/usr/local/pureftpd --without-inetd --with-altlog --with-puredb --with-throttling --with-tls
+7、编译和安装
+make && make install
+8、修改配置文件
+mkdir /usr/local/pureftpd/etc
+cd ./configuration-file/   
+cp pure-ftpd.conf /usr/local/pureftpd/etc/
+修改： /usr/local/etc/pure-ftpd.conf
+PureDB	/usr/local/pureftpd/etc/pureftpd.pdb
+PIDFile	/var/run/pure-ftpd.pid
+9、控制文件
+cp pure-config.pl /usr/local/pureftpd/sbin/
+chmod 755 pure-config.pl4
+10、启动服务
+./sbin/pure-config.pl  ./etc/pure-ftpd.conf
+11、添加管理用户
+useradd test
+mkdir -p /var/www/html
+chown -R test:test /var/www/html
+./bin/pure-pw useradd  ftp_user1 -u test -d /var/www/html
+ftp_user1 : ftp登录用户
+-u:指定系统中存在的用户
+-d:指定访问的目录
+12、创建虚拟的用户数据库
+./bin/pure-pw mkdb
+13、通过ftp链接工具（FileZila）测试
+
