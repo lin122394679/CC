@@ -1,0 +1,46 @@
+一般空间商提供的服务器空间默认PHP 指令 magic_quotes_gpc是on的，也就是打开的。这时候就可以用stripslashes() 函数删除自动添加的反斜杠。用法就是：比如包含字符串的变量是$str，那么就用stripslashes() 函数处理一下这个字符串：stripslashes($str)，输出的结果就是去掉反斜杠的。
+如果遇到输出的结果中包含反斜杠的，可对输出内容用stripslashes()函数处理一下，即$str=stripslashes($str)，保存即可将输出内容中包含的反斜杠去掉。
+但是又存在另外一个问题，那就是因为本地PHP 指令 magic_quotes_gpc是off的，如果用这个函数的话，就会把本来正常的反斜杠也去掉了。这样就不是我们所希望的了。
+解决办法就是可以使用函数 get_magic_quotes_gpc() 进行检测，如果是打开的状态，那么就去除反斜杠，如果是关闭的状态，则不去除反斜杠。
+程序代码如下：
+$str=$_POST["str"];           //读取str的内容赋值给$str变量
+if(get_magic_quotes_gpc()){   //如果get_magic_quotes_gpc()是打开的
+    $str=stripslashes($str);  //将字符串进行处理
+}
+
+下面介绍三种方法解决这个问题：
+ 
+１ 修改PHP配置文件php.ini
+ 
+这种方法只适于自己有权管理服务器的情况下，如果用的虚拟空间，那就只能采用后两条方法。
+ 
+在PHP配置文件php.ini中将magic_quotes_gpc、magic_quotes_runtime、magic_quotes_sybase全部设为off。如下所示：
+magic_quotes_gpc = Off
+ 
+magic_quotes_runtime = Off
+ 
+magic_quotes_sybase = Off
+
+２ 利用.htaccess文件
+ 
+该方法只在服务器支持htaccess的情况下，现在的服务器一般都会支持的
+ 
+在程序目录下.htaccess文件中增加下面一句：
+php_flag magic_quotes_gpc Off
+
+３ 在代码中屏蔽
+ 
+该方法是移植性最强的，不用考虑服务器的配置，只要支持PHP就可以使用。
+ 
+在所有PHP文件开始处增加下面代码
+
+if(get_magic_quotes_gpc()){
+	function stripslashes_deep($value){
+		$value=is_array($value)?array_map('stripslashes_deep',$value):stripslashes($value);
+		return $value;
+	}
+	$_POST=array_map('stripslashes_deep',$_POST);
+	$_GET=array_map('stripslashes_deep',$_GET);
+	$_COOKIE=array_map('stripslashes_deep',$_COOKIE);
+	$_REQUEST=array_map('stripslashes_deep',$_REQUEST);
+}
