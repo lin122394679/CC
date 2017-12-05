@@ -1,0 +1,120 @@
+绝对不能知道用户的密码，我们必须将用户的密码进行加密处理，不能将用户的原始密码直接保存在数据库。不要限制用户密码格式，如果规定格式的话，很可能被攻击者利用并破解，当然我们需要限制密码的最小长度即可，建议最少8位，越长越好。
+对于密码安全，开发者需要做到：
+1、绝对不能知道用户的密码，我们必须将用户的密码进行加密处理，不能将用户的原始密码直接保存在数据库。
+2、不要限制用户密码格式，如果规定格式的话，很可能被攻击者利用并破解，当然我们需要限制密码的最小长度即可，建议最少8位，越长越好。
+3、不能通过邮箱发送用户密码，我们在开发邮件找回密码的应用时，并不是将用户密码通过邮件告知给用户，而是将重置密码的链接以邮件的形式发给用户，让用户自己去重新设置密码。
+
+MD5加盐与安全
+PHP开发者对md5()这个函数是熟悉不过了，很多开发者都使用md5('abc123')对用户密码进行加密处理，这样做没有错，但是安全性还是很低的，因为很多网站的用户数据都是用md5进行加密处理的，所以就发生了撞库事件，最典型的就是前些年12306火车票网站上的用户信息泄露事件。很多人在多个网站使用相同的密码，黑客将A站的用户密码和B站的密码对比发现是相同的，于是A站的密码就登录上了B站。另外一个，md5算法很早就能破解了，所以单单md5处理是不安全的。
+那么我们可以使用md5加salt来增强加密后的密码安全性，salt及盐值，这个值要随机生成，可在用户注册的时候和密码一起生成并保存到数据库中，用户登录验证的时候再把密码和盐值一起组合验证。
+$password = '1dhsh#sdLs'; 
+$salt = randStr(); 
+$md5pass = md5('hello'.$password.$salt); 
+ 
+function randStr($length = 8){  
+    $randpwd = '';  
+    for ($i = 0; $i < $length; $i++){  
+        $randpwd .= chr(mt_rand(33, 126));  
+    }  
+    return $randpwd;  
+}  
+上面的代码将密码和盐值以及常量混合，再md5的到一个复杂的加密后的字符串，然后将加密后的字符串$md5pass和盐值$salt保存到数据表中，验证的时候再拿出来，按照同样的方式组合，如果组合加密后的字符串与数据表中的$md5pass值一样，那么就验证成功了。总的来说设置相对复杂的密码加盐处理后破解难度还是很大的。
+password_hash密码哈希与安全
+PHP版本 >= 5.5 时，可以使用 password_hash()和password_verify()来对用户的密码进行加密和验证。
+对于密码加盐处理，password_hash函数现在使用的是目前 PHP 所支持的最强大的加密算法 BCrypt 。 当然，此函数未来会支持更多的加密算法。 事实上password_hash()已经帮我们处理好了加盐。加进去的随机子串通过加密算法自动保存着，成为哈希的一部分。password_verify()会把随机子串从中提取，所以你不必使用另一个数据库来记录这些随机子串，大大简化了计算密码哈希值和验证密码的操作。
+我们使用实例来熟悉password_hash的用法。
+首先来看注册用户register.php部分。
+<?php 
+try { 
+    // 验证email 
+    $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL); 
+    if (!$email) { 
+        throw new Exception('非法的Email'); 
+    } 
+ 
+    // 验证密码 
+    $password = filter_input(INPUT_POST, 'password'); 
+    if (!$password || mb_strlen($password) < 8) { 
+        throw new Exception('密码长度必须大于8位'); 
+    } 
+ 
+    // 检测用户名是否已存在 
+    $sql = "SELECT username FROM user WHERE username=:username"; 
+    $stmt = $db->prepare($sql); 
+    $stmt->execute(array( 
+        ':username' => $email 
+    )); 
+    $row = $stmt->fetch(PDO::FETCH_ASSOC); 
+    if ($row) { 
+        exit('用户Email已存在'); 
+    } 
+ 
+    // 创建密码哈希值 
+    $passwordHash = password_hash( 
+       $password, 
+       PASSWORD_DEFAULT, 
+       ['cost' => 12] 
+    ); 
+    if ($passwordHash === false) { 
+        throw new Exception('Password hash failed'); 
+    } 
+     
+    $sql_insert = "INSERT INTO `user` (username,password) VALUES (:username,:password)"; 
+    $stmt = $db->prepare($sql_insert); 
+    $stmt->execute(array( 
+        ':username' => $email, 
+        ':password' => $passwordHash, 
+    )); 
+    $insert_id = $db->lastinsertid(); 
+    if ($insert_id) { 
+        // 重定向到登录页面 
+        header('HTTP/1.1 302 Redirect'); 
+        header('Location: login.html'); 
+    } 
+} catch (Exception $e) { 
+    // 报告错误 
+    header('HTTP/1.1 400 Bad request'); 
+    echo $e->getMessage(); 
+} 
+shangshang
+再来看登录验证login.php部分。
+上述代码中，首先验证用户的Email和密码，如果不符合就抛出异常。然后使用password_hash()函数来创建密码哈希值，这个函数第一个参数是纯文本密码；第二个参数是PASSWORD_DEFAULT常量，它告诉PHP使用bcrypt哈希算法；第三个参数是一个数组，指定哈希选项，这个数组中的cost用于设定工作因子，默认是10，可以根据硬件能力提高这个值。最后创建帐户将数据写入数据表中。
+<?php 
+session_start(); 
+try { 
+    // 获取post的email 
+    $email = filter_input(INPUT_POST, 'email'); 
+ 
+    // 获取登录密码 
+    $password = filter_input(INPUT_POST, 'password'); 
+ 
+    // 查找用户 
+    $sql = "SELECT id,password FROM user WHERE username=:username"; 
+    $stmt = $db->prepare($sql); 
+    $stmt->execute(array( 
+        ':username' => $email 
+    )); 
+    $row = $stmt->fetch(PDO::FETCH_ASSOC); 
+    if (!$row) { 
+        exit('用户不存在'); 
+    } 
+ 
+    // 验证密码 
+    if (password_verify($password, $row['password']) === false) { 
+        exit('密码错误！'); 
+    } 
+ 
+    // 保存session会话 
+    $_SESSION['user_logged_in'] = 'yes'; 
+    $_SESSION['user_email'] = $email; 
+ 
+    // 重定向跳转 
+    header('HTTP/1.1 302 Redirect'); 
+    header('Location: user.php'); 
+} catch (Exception $e) { 
+    header('HTTP/1.1 401 Unauthorized'); 
+    echo $e->getMessage(); 
+} 
+上述代码首先获取用户Email和密码，然后根据Email查找数据表中是否存在该Email，如果存在则将注册时加密的密码hash取出来；然后使用password_verify()函数验证密码，password_verify()函数有两个参数，第一个参数是纯文本密码，第二个参数是用户数据表中读取出来的密码hash值。如果该函数返回true，说明密码正确，否则，密码错误，终止登录。
+当过去一段时间后，我们想将用户加密的哈希密码增强升级，可以使用password_needs_rehash()来检查用户密码哈希值是否需要更新，比如将工作因子从10升到20，重新计算密码哈希值，让密码变得更安全。
+如果你的php版本是在5.3.7～5.5之间，可以使用password_hash的替代方案：password_compat。
