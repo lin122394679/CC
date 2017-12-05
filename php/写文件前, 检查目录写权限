@@ -1,0 +1,33 @@
+写文件前, 检查目录写权限
+
+写或保存文件前, 确保目录是可写的, 假如不可写, 输出错误信息. 这会节约你很多调试时间. linux系统中, 需要处理权限, 目录权限不当会导致很多很多的问题, 文件也有可能无法读取等等.
+
+确保你的应用足够智能, 输出某些重要信息.
+
+$contents = "All the content";
+$file_path = "/var/www/project/content.txt";
+file_put_contents($file_path , $contents);
+
+这大体上正确. 但有些间接的问题. file_put_contents 可能会由于几个原因失败:
+
+>>父目录不存在
+
+>>目录存在, 但不可写
+
+>>文件被写锁住?
+
+所以写文件前做明确的检查更好.
+
+$contents = "All the content";
+$dir = '/var/www/project';
+$file_path = $dir . "/content.txt";
+if(is_writable($dir))
+{
+file_put_contents($file_path , $contents);
+}
+else
+{
+die("Directory $dir is not writable, or does not exist. Please check");
+}
+
+这么做后, 你会得到一个文件在何处写及为什么失败的明确信息.
