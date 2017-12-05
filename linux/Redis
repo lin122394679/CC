@@ -1,0 +1,145 @@
+Redis安装使用
+
+1、Redis安装：
+说明：
+1、也是一种类似于Memcached的key-value机制的存储服务
+2、是非关系型数据库（NoSQL）的一种
+3、官网：www.redis.io，中文网：www.redis.cn
+特点：
+1、能够持久化存储数据，而Memcached不能
+2、value支持更多的数据类型
+3、支持数据备份，主从模式
+安装:Redis
+1、解压
+tar -zxvf redis-3.2.8.tar.gz
+2、移动
+cp -R redis-3.2.8 /usr/local/redis
+3、安装（无需配置编译）
+make install
+服务：
+安装完成后，/usr/local/redis/src目录中有两个服务程序
+客户端：redis-cli
+服务端：redis-server
+服务测试： ./redis-server
+1、需要指定启动配置文件
+2、默认配置/usr/local/redis/redis.conf
+添加环境变量：
+vi /etc/profile		#修改文件
+export PATH=$PATH:/usr/local/redis/src	#在文件末尾添加
+source /etc/profile	#使文件立即生效
+开机启动：
+1、复制配置文件
+cd /usr/local/redis
+cp redis.conf redis_6379.conf
+2、编辑配置文件 redis_6379.conf
+daemonize yes 	#以守护进程的方式启动（后台运行）
+3、复制启动脚本文件
+cd utils
+cp redis_init_script	redis_init_script_6379
+4、编辑启动脚本 redis_init_script_6379
+EXEC=/usr/local/redis/src/redis-server	#服务端路径
+CLIEXEC=/usr/local/redis/src/redis-cli	#客户端路径
+CONF=/usr/local/redis/redis_6379.conf	#配置文件路径
+5、测试启动脚本（可以通过ps查看，并用redis-cli连接）
+./redis_init_script_6379 start
+6、修改开机启动文件 /etc/rc.local,添加
+/usr/local/redis/utils/redis_init_script_6379 start
+7、下次开机就会启动redis服务
+
+服务测试：
+1、查看进程
+ps aux | grep redis
+2、使用客户端连接
+cd /usr/local/redis/src
+连接参数：
+-h ： 指定主机
+-p ： 指定端口号
+-a ： 指定密码
+./redis-cli
+127.0.0.1:6379>ping
+PONG
+3、默认情况下是无效密码的，使用密码有两种方式
+1、单次生效，通过命令设置
+设置密码：config requirepass 123456
+获取密码： confg get requirepass
+授权使用： auth 123456
+2、永久生效，需要修改配置文件
+1、vi redis_6379.conf
+2、取消’requirepass’行的注释，后面写上密码即可
+requirepass 123456
+说明：启用密码后，无密码也可以连接，但是没有权限进行操作
+2、客户端操作：
+常用命令：
+ping：查看服务器是否允许
+quit：关闭当前连接
+auth：验证密码
+select：选择库，0-15，共16个，默认使用0
+flushdb：删除当前数据库
+flushall：删除所有数据库
+DEL：删除键
+EXISTS：检查键是否存在
+数据类型：
+字符串（String）：是最基本的数据类型，与Memcached的key-value一样
+设置：SET key value
+获取：GET key
+哈希（Hash）：是一个键值对集合，特别适合存储对象
+设置：HMSET user:1 name xiaoming password 123456 level 2
+获取所有信息：HGETAll user:1
+获取单个信息：HGET user:1 name
+列表（List）：按照插入顺序排序，可以添加一个元素到列表的头部（左边）或者尾部（右边）
+左侧压入：lpush key value [value2 ...]
+范围显示：lrange key start stop
+显示个数：llen key
+左侧弹出：lpop
+右侧压入：rpush
+右侧弹出：rpop
+集合（Set）：string类型的无序集合，集合中的数据是唯一的。
+添加数据：sadd key value1 [value2...]
+显示数据：smembers key
+显示总数：scard key
+随机移除：spop key 【count】 默认随机移除一个
+有序集合（zset：sorted set）：
+不同于set的是每一个元素都会关联一个double类型的分数。
+redis正是通过分数来为集合中的成员进行从小到大的排序。
+添加数据： zadd key score value
+显示数据：zrange key start stop
+显示总数：zcard key
+显示范围：zcount key start stop
+显示序号：zrank key member
+显示分数：zscore key member
+
+3、PHP操作Redis：
+1、安装php-redis扩展：
+下载：https://github.com/phpredis/phpredis/tree/php7
+phpredis-php7.zip
+或者：
+git 克隆phpredis源码：
+git clone -b php7https://github.com/phpredis/phpredis.git
+解压：
+unzip phpredis-php7.zip
+进入：
+cd phpredis-php7
+解压：
+phpize
+配置：
+./configure --with-php-config=/usr/local/php7/bin/php-config
+编译：
+make
+安装：
+make install
+2、修改PHP配置文件：
+vi /usr/local/php7/etc/php.ini
+将上步的路径添加进来
+extension=/usr/local/php7/lib/php/extensions/no-debug-non-zts-20151012/redis.so
+3、重启php-fpm
+service php-fpm restart
+4、测试扩展库是否安装成功（phpinfo()）
+5、PHP代码操作Redis
+//创建对象
+$reis = new Redis();
+//连接服务器
+$redis->connect('127.0.0.1', 6379);
+//密码认证
+$redis->auth('123456');
+
+
