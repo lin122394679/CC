@@ -1,0 +1,84 @@
+因疏忽，上一篇《PHP命名空间和自动加载类》的来源写错了，作者是山河永寂，原文链接是https://segmentfault.com/a/1190000004851664
+
+导读
+
+PHP的类文件在被其他文件include的时候不能直接使用其他文件中的已定义的别名。
+
+比如有三个文件。
+
+test.php　一个简单的脚本运行文件
+NameSpaceClass.php 一个类文件，定义了一个命名空间
+UseNameSpace.php，一个类文件，使用了NameSpaceClass命名空间里的类方法
+
+问题描述
+
+如果在test.php文件中先定义了一个命名空间别名(use) ，且是NameSpaceClass的命名空间别名，然后直接include UseNameSpace.php,注意，先假设这里的UseNameSpace.php里不使用任何关于命名空间的东西。那么test.php代码能正常运行么。
+
+实践
+
+我们先来看看这三个文件内容
+
+test.php
+
+use Util\NameSpaceClass;
+include("./NameSpaceClass.php");
+include("./UseNameSpace.php");
+UseNameSpace::out_put();
+NameSpaceClass.php
+
+namespace Util;
+class NameSpaceClass
+{
+   public static function out_put()
+   {
+      echo "This is a Utils namespace \n";
+   }
+}
+
+UseNameSpace.php：
+
+class UseNameSpace
+{
+        public　static function use_out_put()
+        {
+                echo NameSpaceClass::out_put();
+        }
+}
+
+从上面可以看出，　NameSpaceClass.php里定义了一个命名空间Util,　并定义了类NameSpaceClass, 以及一个静态方法out_put,　方法中只是输出了一行字符串
+
+UseNameSpace.php 中暂时未定义命名空间，但他的类方法直接调用了NameSpaceClass的方法，我们知道直接这么做是错误的，因为两个根本不在一个命名空间内。
+
+test.php　直接静态调用UseNameSpace的方法，最终希望输出NameSpaceClass.php中的内容
+
+假设
+
+如果就目前这种代码，直接运行test.php，会发生社么事情？？
+
+按照惯性思维，这种方式test从上到下，一次定义命名空间别名，加载类文件,输出结果，虽然最终的UseNameSpace不在NameSpaceClass的命名空间内，但最开始已经定义命名空间别名(use Util\NameSpaceClass;)了,　应该会没问题的了。
+
+实践结果
+
+PHP Fatal error: Class 'NameSpaceClass' not found in /tmp/UseNameSpace.php on line 7
+
+结果却出现了错误
+
+分析
+
+惯性思维里，php的include操作类似于把要include的文件内容直接插入到该include的位置，　被include的文件应该直接能使用原有文件的已经定义的任何内容。
+
+但实际上在命名空间这里却不一样，　不同类文件中的命名空间之间是相互分离的，即某个文件中定义的use的命名空间，在其他的类文件中不能使用。　
+
+以下来自一个大牛对我的指导(涨姿势)
+
+在包括其他的许多语言中，在定义类库文件的时候，会在类库中定义好本身的依赖关系，并做好不同情况下的兼容处理，而这也正式底层类库的设计难点
+
+我们PHP的命名空间正是这种依赖关系的一个体现，在定义好了一个类库后，我们应该也要定义好他依赖的本类库甚至是第三方的命名空间(用use)，我们不能指望用户在拿到这个类库后还要自己去尝试找到类的依赖命名空间，最起码，我们应该给他一个提示，使用了哪些命名空间，怎么加载等等。
+
+解决
+
+在UseNameSpace.php中添加依赖类库的命名空间别名
+
+use Util\NameSpaceClass;
+
+以上就是今天遇到的关于php命名空间的一个坑，谨记于此。
