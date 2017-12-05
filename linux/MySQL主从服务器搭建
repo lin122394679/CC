@@ -1,0 +1,39 @@
+MySQL主从服务器：
+
+1、架设两个虚拟服务器，都安装好MySQL
+
+2、关闭iptables，和selinux。
+service iptables stop
+setenforce 0
+
+3、修改/etc/my.cnf
+server-id = 1		#主机可以设置为1，从机可以设置为IP最后一段（保证唯一性）
+log-bin=mysql-bin	#主从服务的核心
+service mysqld restart	#重启服务器
+
+4、主服务器上和从服务器数据库和表保持一致。
+1、登录数据库服务器
+mysql -uroot -p
+2、创建测试数据库
+create database test;
+3、选择test数据库
+use test;
+4、创建用于主从测试的数据表user
+create table user(id int(11) auto_increment primary key, name varchar(32))engine=innodb,default charset=utf8;
+
+5、主服务器配置（创建一个专门用来同步数据的账号）
+grant replication slave on *.* to 'mysnc'@'%' identified by '12345678';
+show master status; 		#查看状态，此后不要再进行任何操作；
+
+6、从服务器上进行配置：
+change master to master_host='192.168.1.104', master_user='mysync',master_password='12345678', master_log_file='mysql-bin.[File]', master_log_pos=[Position];
+[File]和[Position]要与主机状态显示的一致  ==== eg: 000006  511
+//start slave；		#开启从服务
+slave start ;
+
+show slave status \G; #查看从服务状态，如下两个选项都为Yes表明主从成功
+Slave_IO_Running: Yes
+Slave_SQL_Running:Yes
+7、主服务器上进行插入数据测试
+insert into user(name) values('xiaoming');
+从服务器查看：select * from user;
