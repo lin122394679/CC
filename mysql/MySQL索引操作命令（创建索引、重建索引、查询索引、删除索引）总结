@@ -1,0 +1,26 @@
+本篇文章主要是对MySQL索引操作方法做了一下总结，包括创建索引、重建索引、查询索引、删除索引的操作。以下所列示例中中 `table_name` 表示数据表名，`index_name` 表示索引名，column list 表示字段列表（如：`id`,`order_id`）。
+1、创建索引
+索引的创建可以在CREATE TABLE语句中进行，也可以单独用CREATE INDEX或ALTER TABLE来给表增加索引。以下命令语句分别展示了如何创建主键索引（PRIMARY KEY），联合索引（UNIQUE）和普通索引（INDEX）的方法。
+mysql>ALTER TABLE `table_name` ADD INDEX `index_name` (column list);
+mysql>ALTER TABLE `table_name` ADD UNIQUE `index_name` (column list);
+mysql>ALTER TABLE `table_name` ADD PRIMARY KEY `index_name` (column list);
+mysql>CREATE INDEX `index_name` ON `table_name` (column_list);
+mysql>CREATE UNIQUE INDEX `index_name` ON `table_name` (column_list);
+例如：
+mysql>ALTER TABLE `article` ADD INDEX `id`;//给article表增加id索引
+或者：
+mysql>ALTER TABLE `article` ADD INDEX (`id`,`order_id`);给article表增加id索引，order_id索引
+2、重建索引
+重建索引在常规的数据库维护操作中经常使用。在数据库运行了较长时间后，索引都有损坏的可能，这时就需要重建。对数据重建索引可以起到提高检索效率。
+mysql> REPAIR TABLE `table_name` QUICK;
+
+3、查询数据表索引
+mysql> SHOW INDEX FROM `table_name`;
+关于查询数据表索引可参照本站文章：mysql查询表索引的命令详解
+4、删除索引
+删除索引可以使用ALTER TABLE或DROP INDEX语句来实现。DROP INDEX可以在ALTER TABLE内部作为一条语句处理，其格式如下：
+mysql>DROP index `index_name` ON `table_name` (column list);
+mysql>ALTER TABLE `table_name` DROP INDEX `index_name` (column list);
+mysql>ALTER TABLE `table_name` DROP UNIQUE `index_name` (column list);
+mysql>ALTER TABLE `table_name` DROP PRIMARY KEY `index_name` (column list);
+在前面的三条语句中，都删除了table_name中的索引index_name。而在最后一条语句中，只在删除PRIMARY KEY索引中使用，因为一个表只可能有一个PRIMARY KEY索引，因此也可不指定索引名。如果没有创建PRIMARY KEY索引，但表具有一个或多个UNIQUE索引，则MySQL将删除第一个UNIQUE索引。如果从表中删除某列，则索引会受影响。对于多列组合的索引，如果删除其中的某列，则该列也会从索引中删除。如果删除组成索引的所有列，则整个索引将被删除。
